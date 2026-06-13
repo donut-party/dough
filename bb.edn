@@ -1,0 +1,5 @@
+{:paths ["src" "resources"]
+ :tasks {generate {:doc  ""
+                   :task donut.project-management.generate/-main}}
+ :deps  {org.clojure/clojure  {:mvn/version "1.12.4"}
+         party.donut/bb-utils {:local/root "../bb-utils"}}}
