@@ -1,5 +1,10 @@
-{:paths ["src" "resources"]
- :tasks {generate {:doc  ""
-                   :task donut.project-management.generate/-main}}
- :deps  {org.clojure/clojure  {:mvn/version "1.12.4"}
-         party.donut/bb-utils {:local/root "../bb-utils"}}}
+{:paths ["src" "resources" "test"]
+ :tasks {local-test {:doc  "Install local donut libs and regenerate template-test to test changes across repos"
+                     :task donut.project-management.local-test/-main}
+         generate   {:doc  "Install local generators into the donut CLI and regenerate template-test (npm i, git init, entity scaffold)"
+                     :task donut.project-management.generate/-main}
+         test       {:doc  "Run unit tests"
+                     :task test-runner/-main}}
+ :deps  {org.clojure/clojure     {:mvn/version "1.12.4"}
+         party.donut/bb-utils    {:local/root "../bb-utils"}
+         rewrite-clj/rewrite-clj {:mvn/version "1.2.54"}}}

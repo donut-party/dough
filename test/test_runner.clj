@@ -1,0 +1,18 @@
+(ns test-runner
+  (:require
+   [clojure.test :as t]
+   [donut.project-management.brew-test]
+   [donut.project-management.deps-test]
+   [donut.project-management.local-test-test]
+   [donut.project-management.structure-test]
+   [donut.project-management.versions-test]))
+
+(defn -main
+  [& _]
+  (let [{:keys [fail error]} (t/run-tests 'donut.project-management.brew-test
+                                          'donut.project-management.deps-test
+                                          'donut.project-management.local-test-test
+                                          'donut.project-management.structure-test
+                                          'donut.project-management.versions-test)]
+    (when (pos? (+ fail error))
+      (System/exit 1))))

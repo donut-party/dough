@@ -2,10 +2,9 @@
   (:require
    [babashka.fs :as fs]
    [babashka.process :as ps]
-   [clojure.string :as str]
    [donut.bb-utils.file :as dbbf]
-   [donut.bb-utils.process :as dbbps]
-   [donut.bb-utils.project :as dbbproj]
+   [donut.project-management.deps :as deps]
+   [donut.project-management.local-test :as local-test]
    [donut.project-management.structure :as structure]))
 
 (defn kill-js
@@ -23,7 +22,7 @@
 
 (defn regenerate-template-test
   []
-  (let [tt-dir     (structure/project-root "template-test") 
+  (let [tt-dir     (structure/repo-path "template-test")
         parent-dir (fs/parent tt-dir)]
     (ps/shell {:dir parent-dir} "rm -rf template-test")
     (ps/shell {:dir parent-dir} "donut new donut-template-test/test-app -t template-test")
@@ -37,19 +36,16 @@
 
 (defn -main
   []
-  (let [version          (->> "clj -T:build install"
-                              (dbbps/sh-out {:dir (structure/project-root "generators")})
-                              str/split-lines
-                              last)
-        donut-cli-bb-edn (fs/path (structure/project-root "donut-cli") "donut-cli/bb.edn")]
+  (let [version          (local-test/install-lib! "generators")
+        donut-cli-bb-edn (fs/path (structure/repo-path "donut-cli") "donut-cli/bb.edn")]
 
     ;; update donut cli deps to use latest generators
     (dbbf/update-file donut-cli-bb-edn
-                      dbbproj/update-dependency-version
+                      deps/update-mvn-version
                       'party.donut/generators
                       version)
 
-    (ps/shell {:dir (fs/path (structure/project-root "donut-cli") "develop/bin")} "./develop copy-local")
+    (ps/shell {:dir (fs/path (structure/repo-path "donut-cli") "develop/bin")} "./develop copy-local")
 
     (kill-js)
 
