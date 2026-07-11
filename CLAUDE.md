@@ -16,9 +16,10 @@ Every sibling directory of this repo (under `../`) is a related donut framework 
 
 Tasks are babashka tasks defined in `bb.edn`, runnable from any directory via `bin/run` (it passes `bb --config` so paths resolve to this repo):
 
-- `bin/run` — list tasks
-- `bin/run local-test` — install local donut libs, refresh the donut CLI, and regenerate `../template-test` so changes across repos can be tested together
-- `bin/run test` — run the unit tests in `test/`
+- `bin/run` - open an interactive task picker (gum, via bblgum)
+- `bin/run rebuild-test-app` - install local donut libs, refresh the donut CLI, and rebuild `../template-test` so changes across repos can be tested together
+- `bin/run regenerate-legacy` - older template-test regeneration flow (npm i, git init, entity scaffold), superseded by `rebuild-test-app`
+- `bin/run test` - run the unit tests in `test/`
 
 ## Structure
 
@@ -27,11 +28,12 @@ Tasks are babashka tasks defined in `bb.edn`, runnable from any directory via `b
   - `deps.clj` — pure deps.edn/bb.edn editing helpers (rewrite-clj based)
   - `versions.clj` — version-string parse/bump/persist helpers
   - `brew.clj` — locally-installed homebrew formula path helpers
-  - `local_test.clj` — the `local-test` workflow (step plans are data; pure fns are tested)
-  - `generate.clj` — older regenerate workflow
+  - `local_test.clj` - implements the `rebuild-test-app` task (step plans are data; pure fns are tested)
+  - `generate.clj` - implements the `regenerate-legacy` task
+  - `menu.clj` - the interactive task picker `bin/run` shows when called with no arguments
 - `test/` — unit tests, run by `bin/run test` (runner: `test/test_runner.clj`)
 - `plans/` — planning documents for cross-repo initiatives
 - `bb.edn` / `build.clj` — Babashka tasks and build config
 - `todo.org` — running task list
 
-Utility namespaces here consolidate and improve the ones in `../donut-cli/develop/src` (which still exist — the `local-test` workflow shells out to `../donut-cli/develop/bin/develop`). Shared lower-level helpers live in `../bb-utils` (`donut.bb-utils.*`), a `:local/root` dep.
+Utility namespaces here consolidate and improve the ones in `../donut-cli/develop/src` (which still exist - the `rebuild-test-app` task shells out to `../donut-cli/develop/bin/develop`). Shared lower-level helpers live in `../bb-utils` (`donut.bb-utils.*`), a `:local/root` dep.
