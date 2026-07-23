@@ -5,8 +5,8 @@
    [donut.project-management.structure :as structure]))
 
 (deftest repo-path-test
-  (is (= (str (fs/path "/tmp/framework" "devtools"))
-         (str (structure/repo-path "/tmp/framework" "devtools"))))
+  (is (= (str (fs/path "/tmp/framework" "app-devtools"))
+         (str (structure/repo-path "/tmp/framework" "app-devtools"))))
   (testing "\".\" names the framework root itself"
     (is (= "/tmp/framework"
            (str (structure/repo-path "/tmp/framework" "."))))))

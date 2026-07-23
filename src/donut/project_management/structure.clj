@@ -24,7 +24,7 @@
   (str (fs/parent (project-management-root))))
 
 (defn repo-path
-  "Path to a donut repo, e.g. (repo-path \"devtools\").
+  "Path to a donut repo, e.g. (repo-path \"app-devtools\").
   \".\" names the framework root itself."
   ([repo-name]
    (repo-path (framework-root) repo-name))
