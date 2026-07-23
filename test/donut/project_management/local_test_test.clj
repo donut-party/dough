@@ -12,7 +12,7 @@
   (is (= [["."             "rm -rf template-test"]
           ["."             "donut new donut-template-test/test-app -t template-test"]
           ["template-test" "donut generate entity-scaffold user"]
-          ["template-test" "donut generate --lib party.donut/bakery:0.0.47 :donut.bakery.generators/install"]]
+          ["template-test" "donut generate --lib party.donut/devtools:0.0.47 :donut.devtools.generators/install"]]
          (mapv (juxt :repo :cmd) (local-test/regenerate-steps "0.0.47")))))
 
 (deftest parse-installed-version-test

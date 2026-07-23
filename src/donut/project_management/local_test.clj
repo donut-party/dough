@@ -21,13 +21,13 @@
 
 (defn regenerate-steps
   "Rebuild the template-test app with the freshly-installed libs."
-  [bakery-version]
+  [devtools-version]
   [{:repo "."             :cmd "rm -rf template-test"}
    {:repo "."             :cmd "donut new donut-template-test/test-app -t template-test"}
    {:repo "template-test" :cmd "donut generate entity-scaffold user"}
    {:repo "template-test" :cmd (str "donut generate"
-                                    " --lib party.donut/bakery:" bakery-version
-                                    " :donut.bakery.generators/install")}])
+                                    " --lib party.donut/devtools:" devtools-version
+                                    " :donut.devtools.generators/install")}])
 
 (defn parse-installed-version
   "The donut build scripts print the installed version as the last line of
@@ -76,6 +76,6 @@
   []
   (update-generators-dep! (install-lib! "generate"))
   (run! run-step! donut-cli-steps)
-  (let [bakery-version (install-lib! "bakery")]
-    (run! run-step! (regenerate-steps bakery-version)))
+  (let [devtools-version (install-lib! "devtools")]
+    (run! run-step! (regenerate-steps devtools-version)))
   (process/tee "\nlocal-test complete" :bold.green))
