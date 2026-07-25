@@ -3,10 +3,10 @@
                             :task donut.project-management.rebuild-test-app/-main}
          regenerate-legacy {:doc  "Older template-test regeneration flow (npm i, git init, entity scaffold), superseded by rebuild-test-app"
                             :task donut.project-management.regenerate-legacy/-main}
-         sync-repos        {:doc  "Clone/rebase every donut-party org repo off GitHub and print a report (needs `gh auth login`)"
-                            :task donut.project-management.sync-repos/-main}
          repo-status       {:doc  "Report every sibling donut repo that isn't clean and on its default branch"
                             :task donut.project-management.repo-status/-main}
+         sync-repos        {:doc  "Clone/rebase every donut-party org repo off GitHub and print a report (needs `gh auth login`)"
+                            :task donut.project-management.sync-repos/-main}
          test              {:doc  "Run unit tests"
                             :task test-runner/-main}}
  :deps  {org.clojure/clojure          {:mvn/version "1.12.4"}
