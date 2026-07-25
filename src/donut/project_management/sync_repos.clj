@@ -133,13 +133,15 @@
 
 (defn print-report!
   [rows]
+  ;; No :header.foreground: in `gum table --print`, the "selected" row 0
+  ;; style ends up inheriting the header's color regardless of
+  ;; --selected.foreground/--selected.background (both are inert in print
+  ;; mode -- confirmed empirically, not documented). Leaving the header
+  ;; uncolored (still bold, from gum's default) avoids that leaking onto
+  ;; row 0's first result.
   (gum/gum :table :in (->csv rows) :as :ignored :print true
            :columns columns
-           :border.foreground "212"
-           :header.foreground "212"
-           ;; otherwise gum highlights row 0 as if it were "selected"
-           :selected.foreground ""
-           :selected.background ""))
+           :border.foreground "212"))
 
 (def ^:private spinner-frames ["⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏"])
 
