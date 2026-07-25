@@ -1,4 +1,4 @@
-(ns donut.project-management.local-test
+(ns donut.project-management.rebuild-test-app
   "Installs local versions of donut libs, refreshes the donut CLI, and
   regenerates the template-test app so that changes across repos can be
   tested together."

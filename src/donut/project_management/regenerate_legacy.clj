@@ -1,10 +1,10 @@
-(ns donut.project-management.generate
+(ns donut.project-management.regenerate-legacy
   (:require
    [babashka.fs :as fs]
    [babashka.process :as ps]
    [donut.bb-utils.file :as dbbf]
    [donut.project-management.deps :as deps]
-   [donut.project-management.local-test :as local-test]
+   [donut.project-management.rebuild-test-app :as rebuild-test-app]
    [donut.project-management.structure :as structure]))
 
 (defn kill-js
@@ -36,7 +36,7 @@
 
 (defn -main
   []
-  (let [version          (local-test/install-lib! "generators")
+  (let [version          (rebuild-test-app/install-lib! "generators")
         donut-cli-bb-edn (fs/path (structure/repo-path "donut-cli") "donut-cli/bb.edn")]
 
     ;; update donut cli deps to use latest generators

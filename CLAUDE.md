@@ -28,8 +28,8 @@ Tasks are babashka tasks defined in `bb.edn`, runnable from any directory via `b
   - `deps.clj` — pure deps.edn/bb.edn editing helpers (rewrite-clj based)
   - `versions.clj` — version-string parse/bump/persist helpers
   - `brew.clj` — locally-installed homebrew formula path helpers
-  - `local_test.clj` - implements the `rebuild-test-app` task (step plans are data; pure fns are tested)
-  - `generate.clj` - implements the `regenerate-legacy` task
+  - `rebuild_test_app.clj` - implements the `rebuild-test-app` task (step plans are data; pure fns are tested)
+  - `regenerate_legacy.clj` - implements the `regenerate-legacy` task
   - `menu.clj` - the interactive task picker `bin/run` shows when called with no arguments
 - `test/` — unit tests, run by `bin/run test` (runner: `test/test_runner.clj`)
 - `plans/` — planning documents for cross-repo initiatives

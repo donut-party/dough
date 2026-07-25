@@ -1,8 +1,8 @@
 {:paths ["src" "resources" "test"]
  :tasks {rebuild-test-app  {:doc  "Install local donut libs, refresh the donut CLI, and rebuild template-test so changes across repos can be tested together"
-                            :task donut.project-management.local-test/-main}
+                            :task donut.project-management.rebuild-test-app/-main}
          regenerate-legacy {:doc  "Older template-test regeneration flow (npm i, git init, entity scaffold), superseded by rebuild-test-app"
-                            :task donut.project-management.generate/-main}
+                            :task donut.project-management.regenerate-legacy/-main}
          test              {:doc  "Run unit tests"
                             :task test-runner/-main}}
  :deps  {org.clojure/clojure          {:mvn/version "1.12.4"}
