@@ -65,17 +65,18 @@
 
 (defn print-report!
   [statuses]
+  ;; gum (as of 0.17.0) applies --header.foreground to the first *data* row
+  ;; instead of the header row -- a gum bug, not a bblgum one -- so it's
+  ;; left unset here to avoid pink-highlighting that row.
   (gum/gum :table :in (->csv (map ->row statuses)) :as :ignored :print true
            :columns columns
-           :border.foreground "212"
-           :header.foreground "212"
-           :selected.foreground ""
-           :selected.background ""))
+           :border.foreground "212"))
 
 (defn -main
   [& _]
   (let [statuses (->> (structure/sibling-repo-paths)
-                       (map repo-status)
+                       (mapv #(future (repo-status %)))
+                       (mapv deref)
                        (filter needs-attention?)
                        (sort-by :repo))]
     (if (empty? statuses)
