@@ -19,6 +19,19 @@
   [dir]
   (not (str/blank? (:out (sh dir "status" "--porcelain")))))
 
+(defn status-paths
+  "Paths of files git considers changed (staged, unstaged, or untracked) in
+  dir, per `git status --porcelain`. For a rename, this is the new path."
+  [dir]
+  (->> (:out (sh dir "status" "--porcelain"))
+       str/split-lines
+       (remove str/blank?)
+       (map (fn [line]
+              (let [path (subs line 3)]
+                (if (str/includes? path " -> ")
+                  (second (str/split path #" -> " 2))
+                  path))))))
+
 (defn current-branch
   [dir]
   (str/trim (:out (sh dir "rev-parse" "--abbrev-ref" "HEAD"))))

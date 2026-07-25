@@ -4,6 +4,7 @@
   so spare-time work across repos is easy to pick back up."
   (:require
    [babashka.fs :as fs]
+   [babashka.process :as ps]
    [bblgum.core :as gum]
    [bling.core :as bling]
    [clojure.string :as str]
@@ -12,36 +13,42 @@
   (:import
    [java.time Instant ZoneId]))
 
-(defn- repo-files
-  "Every regular file under dir, excluding .git internals -- those churn
-  constantly (index, HEAD, etc.) and don't reflect actual work-in-progress."
-  [dir]
-  (let [git-dir (fs/path dir ".git")]
-    (->> (file-seq (fs/file dir))
-         (filter fs/regular-file?)
-         (remove #(fs/starts-with? % git-dir)))))
-
 (defn- format-date
   [millis]
   (str (.toLocalDate (.atZone (Instant/ofEpochMilli millis) (ZoneId/systemDefault)))))
 
+(defn- dirty-mtime-epoch-seconds
+  "Epoch seconds of the most recently modified file among dirty-paths
+  (relative to dir), via a single batched stat call (BSD stat, as shipped
+  on macOS)."
+  [dir dirty-paths]
+  (let [{:keys [out]} (apply ps/sh "stat" "-f" "%m" (map #(str (fs/path dir %)) dirty-paths))]
+    (->> (str/split-lines (str/trim out))
+         (map #(Long/parseLong (str/trim %)))
+         (apply max))))
+
 (defn most-recent-mtime
-  "YYYY-MM-DD of the most recently modified file under dir (excluding .git)."
-  [dir]
-  (->> (repo-files dir)
-       (map fs/last-modified-time)
-       (map fs/file-time->millis)
-       (apply max)
-       format-date))
+  "YYYY-MM-DD of the most recently modified file that's actually relevant
+  to \"what did I touch\": for a dirty repo, that's the most recently
+  modified dirty file (a single batched stat call over just those paths,
+  not a walk of the whole tree -- node_modules and friends never come into
+  it). A clean repo has nothing dirty to point at, so its modified date is
+  just its last commit's."
+  [dir dirty-paths commit-date]
+  (if (seq dirty-paths)
+    (format-date (* 1000 (dirty-mtime-epoch-seconds dir dirty-paths)))
+    commit-date))
 
 (defn repo-status
   [repo-dir]
-  {:repo           (str (fs/file-name repo-dir))
-   :branch         (git/current-branch repo-dir)
-   :default-branch (git/default-branch repo-dir)
-   :dirty?         (git/dirty? repo-dir)
-   :mtime          (most-recent-mtime repo-dir)
-   :commit-date    (git/last-commit-date repo-dir)})
+  (let [dirty-paths (git/status-paths repo-dir)
+        commit-date (git/last-commit-date repo-dir)]
+    {:repo           (str (fs/file-name repo-dir))
+     :branch         (git/current-branch repo-dir)
+     :default-branch (git/default-branch repo-dir)
+     :dirty?         (boolean (seq dirty-paths))
+     :mtime          (most-recent-mtime repo-dir dirty-paths commit-date)
+     :commit-date    commit-date}))
 
 (defn needs-attention?
   "A repo is worth reporting if it's not sitting clean on its default

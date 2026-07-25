@@ -55,29 +55,28 @@
   (sh! dir "config" "user.email" "test@example.com")
   (sh! dir "config" "user.name" "Test"))
 
+(defn- date-of
+  [file]
+  (str (.toLocalDate (.atZone (java.time.Instant/ofEpochMilli (fs/file-time->millis (fs/last-modified-time file)))
+                               (java.time.ZoneId/systemDefault)))))
+
 (deftest most-recent-mtime-test
-  (fs/with-temp-dir [dir {}]
-    (let [older (fs/file (fs/path dir "older.txt"))
-          newer (fs/file (fs/path dir "newer.txt"))]
-      (spit older "old")
-      (spit newer "new")
-      (fs/set-last-modified-time older (- (System/currentTimeMillis) 100000))
-      (fs/set-last-modified-time newer (System/currentTimeMillis))
-      (is (= (repo-status/most-recent-mtime dir)
-             (str (.toLocalDate (.atZone (java.time.Instant/ofEpochMilli (fs/file-time->millis (fs/last-modified-time newer)))
-                                          (java.time.ZoneId/systemDefault))))))))
-  (testing ".git internals don't count as \"any file\""
+  (testing "clean repo (no dirty paths): mtime is just the commit date, no file scan"
     (fs/with-temp-dir [dir {}]
-      (let [source (fs/file (fs/path dir "source.txt"))
-            git-dir (fs/create-dirs (fs/path dir ".git"))
-            git-file (fs/file (fs/path git-dir "COMMIT_EDITMSG"))]
-        (spit source "src")
-        (fs/set-last-modified-time source (- (System/currentTimeMillis) 100000))
-        (spit git-file "noise")
-        (fs/set-last-modified-time git-file (System/currentTimeMillis))
-        (is (= (repo-status/most-recent-mtime dir)
-               (str (.toLocalDate (.atZone (java.time.Instant/ofEpochMilli (fs/file-time->millis (fs/last-modified-time source)))
-                                            (java.time.ZoneId/systemDefault))))))))))
+      (is (= "2027-05-21" (repo-status/most-recent-mtime dir [] "2027-05-21")))))
+  (testing "dirty repo: mtime is the newest *dirty* file, not the newest file overall"
+    (fs/with-temp-dir [dir {}]
+      (let [older     (fs/file (fs/path dir "older.txt"))
+            newer     (fs/file (fs/path dir "newer.txt"))
+            untouched (fs/file (fs/path dir "untouched.txt"))]
+        (spit older "old")
+        (spit newer "new")
+        (spit untouched "not dirty, but newer than either dirty file")
+        (fs/set-last-modified-time older (- (System/currentTimeMillis) 100000))
+        (fs/set-last-modified-time newer (System/currentTimeMillis))
+        (fs/set-last-modified-time untouched (+ (System/currentTimeMillis) 100000))
+        (is (= (date-of newer)
+               (repo-status/most-recent-mtime dir ["older.txt" "newer.txt"] "2020-01-01")))))))
 
 (deftest repo-status-clean-on-default-branch-test
   (fs/with-temp-dir [dir {}]
@@ -87,6 +86,7 @@
       (is (= "main" (:branch status)))
       (is (= "main" (:default-branch status)))
       (is (false? (:dirty? status)))
+      (is (= (:commit-date status) (:mtime status)) "nothing dirty, so mtime falls back to commit date")
       (is (false? (repo-status/needs-attention? status))))))
 
 (deftest repo-status-dirty-test
@@ -96,6 +96,7 @@
     (spit (fs/file (fs/path dir "README.md")) "changed\n")
     (let [status (repo-status/repo-status dir)]
       (is (true? (:dirty? status)))
+      (is (= (date-of (fs/file (fs/path dir "README.md"))) (:mtime status)))
       (is (true? (repo-status/needs-attention? status))))))
 
 (deftest repo-status-on-feature-branch-test
