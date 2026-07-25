@@ -103,8 +103,3 @@
   "The committer date of HEAD, as YYYY-MM-DD."
   [dir]
   (str/trim (:out (sh dir "log" "-1" "--format=%cd" "--date=short"))))
-
-(defn last-commit-subject
-  "The subject line (first line) of HEAD's commit message."
-  [dir]
-  (str/trim (:out (sh dir "log" "-1" "--format=%s"))))
