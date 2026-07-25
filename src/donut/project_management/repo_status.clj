@@ -74,9 +74,12 @@
 
 (defn -main
   [& _]
+  ;; pmap, not an unbounded future per repo: with ~40 sibling repos, firing
+  ;; every git subprocess and filesystem walk at once causes enough
+  ;; CPU/process-table/disk-I/O contention to be *slower* than bounding
+  ;; concurrency to roughly the CPU count, which pmap does automatically.
   (let [statuses (->> (structure/sibling-repo-paths)
-                       (mapv #(future (repo-status %)))
-                       (mapv deref)
+                       (pmap repo-status)
                        (filter needs-attention?)
                        (sort-by :repo))]
     (if (empty? statuses)
