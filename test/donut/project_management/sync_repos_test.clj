@@ -25,8 +25,8 @@
   (let [row (sync-repos/->row {:repo "system" :branch "main" :dirty? false :dirty-conflict? :na
                                 :main-conflict? false :branch-conflict? true})]
     (is (= "system" (nth row 0)))
-    (is (= "main" (nth row 1)))
-    (is (str/includes? (nth row 2) "✗"))
+    (is (str/includes? (nth row 1) "✗"))
+    (is (= "main" (nth row 2)))
     (is (= ["no" "NA" "no" "yes"] (subvec (vec row) 3))))
   (testing "dirty is highlighted, everything else isn't"
     (let [row (sync-repos/->row {:repo "system" :branch "main" :dirty? true :dirty-conflict? :na
@@ -45,6 +45,40 @@
   (testing "https remotes work too"
     (is (= "system" (sync-repos/remote-repo-name "https://github.com/donut-party/system.git"))))
   (is (nil? (sync-repos/remote-repo-name nil))))
+
+(deftest process-pool!-test
+  (testing "results come back in input order, regardless of completion order"
+    (let [inputs [{:n 0 :sleep-ms 30} {:n 1 :sleep-ms 0} {:n 2 :sleep-ms 20} {:n 3 :sleep-ms 0}]
+          results (sync-repos/process-pool! 4
+                                             (fn [{:keys [n sleep-ms]}]
+                                               (Thread/sleep sleep-ms)
+                                               n)
+                                             inputs
+                                             (constantly nil)
+                                             (constantly nil))]
+      (is (= [0 1 2 3] results))))
+  (testing "every item is processed exactly once, even with more workers than items"
+    (let [processed (atom [])
+          inputs    (range 10)]
+      (sync-repos/process-pool! 4
+                                 (fn [n] (swap! processed conj n) n)
+                                 inputs
+                                 (constantly nil)
+                                 (constantly nil))
+      (is (= (set inputs) (set @processed)))
+      (is (= 10 (count @processed)))))
+  (testing "on-start/on-finish fire once per item"
+    (let [starts  (atom [])
+          finishes (atom [])]
+      (sync-repos/process-pool! 3
+                                 identity
+                                 [:a :b :c :d :e]
+                                 (fn [item] (swap! starts conj item))
+                                 (fn [item result] (swap! finishes conj [item result])))
+      (is (= (frequencies [:a :b :c :d :e]) (frequencies @starts)))
+      (is (= (set [[:a :a] [:b :b] [:c :c] [:d :d] [:e :e]]) (set @finishes)))))
+  (testing "empty input"
+    (is (= [] (sync-repos/process-pool! 4 identity [] (constantly nil) (constantly nil))))))
 
 ;; ---------------------------------------------------------------------------
 ;; integration: sync-repo! against real temp git repos

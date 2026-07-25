@@ -30,7 +30,13 @@
   than this one -- sync-repos doesn't sync itself, since sibling-repo-paths
   already excludes it from :local-path lookup, and treating it as
   \"missing\" would have this task try to clone into its own directory --
-  paired with its local sibling-repo path if it's already cloned."
+  paired with its local sibling-repo path if it's already cloned. Sorted
+  alphabetically by whatever name will actually be reported (the local
+  directory name if it's already cloned, since that can differ from the
+  org's repo name -- e.g. \"identity\" for box.identity -- otherwise the
+  org's repo name, since that's what a fresh clone's directory is named).
+  That's both the order repos get queued for syncing and the order
+  they're reported in."
   []
   (let [this-repo     (remote-repo-name (git/remote-url (structure/project-management-root) "origin"))
         local-by-name (into {}
@@ -38,7 +44,9 @@
                              (structure/sibling-repo-paths))]
     (->> (github/org-repos)
          (remove #(= this-repo (:name %)))
-         (mapv #(assoc % :local-path (get local-by-name (:name %)))))))
+         (map #(assoc % :local-path (get local-by-name (:name %))))
+         (sort-by #(if-let [local-path (:local-path %)] (str (fs/file-name local-path)) (:name %)))
+         vec)))
 
 (defn ensure-cloned!
   "The local path for repo, cloning it via SSH into framework-root first
@@ -100,7 +108,7 @@
   [{:keys [dirty-conflict? main-conflict? branch-conflict?]}]
   (not (or main-conflict? (true? dirty-conflict?) (true? branch-conflict?))))
 
-(def columns ["repo" "branch" "sync?" "dirty?" "dirty conflicts?" "main conflicts?" "branch conflicts?"])
+(def columns ["repo" "sync?" "branch" "dirty?" "dirty conflicts?" "main conflicts?" "branch conflicts?"])
 
 (defn- cell
   [v]
@@ -112,8 +120,8 @@
 (defn ->row
   [result]
   [(:repo result)
-   (:branch result)
    (if (synced? result) (bling/bling [:positive "✓"]) (bling/bling [:negative "✗"]))
+   (:branch result)
    (if (:dirty? result) (bling/bling [:warning "yes"]) "no")
    (cell (:dirty-conflict? result))
    (cell (:main-conflict? result))
@@ -136,15 +144,15 @@
 (def ^:private spinner-frames ["⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏"])
 
 (defn- animate!
-  "Runs f, printing an animated spinner + whatever status-atom currently
-  holds on a single, self-overwriting line until f returns. f is
-  responsible for reset!-ing status-atom as it makes progress."
-  [status-atom f]
+  "Runs f, printing an animated spinner + (render @status-atom) on a
+  single, self-overwriting line until f returns. Returns f's result. f is
+  responsible for swap!-ing status-atom as it makes progress."
+  [status-atom render f]
   (let [stop? (atom false)
         anim  (future
                 (loop [i 0]
                   (when-not @stop?
-                    (print (str "\r[K" (nth spinner-frames (mod i (count spinner-frames))) " " @status-atom))
+                    (print (str "\r[K" (nth spinner-frames (mod i (count spinner-frames))) " " (render @status-atom)))
                     (flush)
                     (Thread/sleep 80)
                     (recur (inc i)))))]
@@ -156,19 +164,50 @@
         (print "\r[K")
         (flush)))))
 
+(defn process-pool!
+  "Runs (f item) for every item in coll using n concurrent worker threads
+  pulling from a shared, index-ordered queue. Calls (on-start item) right
+  before a worker starts an item and (on-finish item result) right after,
+  so callers can track live progress. Returns results in the same order
+  as coll, regardless of completion order."
+  [n f coll on-start on-finish]
+  (let [items    (vec coll)
+        next-idx (atom 0)
+        results  (atom (vec (repeat (count items) nil)))
+        worker   (fn []
+                   (loop []
+                     (let [i (dec (swap! next-idx inc))]
+                       (when (< i (count items))
+                         (let [item (items i)]
+                           (on-start item)
+                           (let [result (f item)]
+                             (swap! results assoc i result)
+                             (on-finish item result)))
+                         (recur)))))]
+    (run! deref (mapv (fn [_] (future (worker))) (range n)))
+    @results))
+
+(def ^:private concurrency 4)
+
 (defn -main
   [& _]
   (let [framework-root (structure/framework-root)
         repos          (repo-descriptors)
         total          (count repos)
-        status         (atom "")
-        results        (atom [])]
-    (animate! status
-              (fn []
-                (doseq [[i {:keys [name local-path] :as repo}] (map-indexed vector repos)]
-                  (when-not local-path
-                    (reset! status (format "clone (%d/%d) %s..." (inc i) total name)))
-                  (let [repo-dir (ensure-cloned! framework-root repo)]
-                    (reset! status (format "sync (%d/%d) %s..." (inc i) total name))
-                    (swap! results conj (sync-repo! repo-dir))))))
-    (print-report! (mapv ->row @results))))
+        status         (atom {:done 0 :active []})
+        render         (fn [{:keys [done active]}]
+                          (format "syncing %d/%d %s" done total (str/join " " active)))
+        results        (animate! status render
+                                  (fn []
+                                    (process-pool! concurrency
+                                                    (fn [{:keys [name] :as repo}]
+                                                      (sync-repo! (ensure-cloned! framework-root repo)))
+                                                    repos
+                                                    (fn [{:keys [name]}]
+                                                      (swap! status update :active conj name))
+                                                    (fn [{:keys [name]} _result]
+                                                      (swap! status (fn [s]
+                                                                      (-> s
+                                                                          (update :active #(vec (remove #{name} %)))
+                                                                          (update :done inc))))))))]
+    (print-report! (->> results (sort-by :repo) (mapv ->row)))))
