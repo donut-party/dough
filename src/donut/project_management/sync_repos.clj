@@ -108,24 +108,26 @@
   [{:keys [dirty-conflict? main-conflict? branch-conflict?]}]
   (not (or main-conflict? (true? dirty-conflict?) (true? branch-conflict?))))
 
-(def columns ["repo" "sync?" "branch" "dirty?" "dirty conflicts?" "main conflicts?" "branch conflicts?"])
+(def columns ["repo" "sync?" "branch" "conflicts"])
 
-(defn- cell
-  [v]
-  (case v
-    :na    "NA"
-    true   "yes"
-    false  "no"))
+(defn conflict-labels
+  "Which of dirty/main/branch actually conflicted, as the words used in the
+  \"conflicts\" column -- in that order, regardless of result's key order."
+  [{:keys [dirty-conflict? main-conflict? branch-conflict?]}]
+  (cond-> []
+    (true? dirty-conflict?)  (conj "dirty")
+    (true? main-conflict?)   (conj "main")
+    (true? branch-conflict?) (conj "branch")))
 
 (defn ->row
   [result]
   [(:repo result)
    (if (synced? result) (bling/bling [:positive "✓"]) (bling/bling [:negative "✗"]))
    (:branch result)
-   (if (:dirty? result) (bling/bling [:warning "yes"]) "no")
-   (cell (:dirty-conflict? result))
-   (cell (:main-conflict? result))
-   (cell (:branch-conflict? result))])
+   (let [labels (conflict-labels result)]
+     (if (seq labels)
+       (bling/bling [:warning (str/join ", " labels)])
+       "none"))])
 
 (defn ->csv
   [rows]

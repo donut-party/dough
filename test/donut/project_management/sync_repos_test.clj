@@ -21,18 +21,33 @@
     (is (false? (sync-repos/synced? {:main-conflict? false :branch-conflict? true :dirty-conflict? :na})))
     (is (false? (sync-repos/synced? {:main-conflict? false :branch-conflict? :na :dirty-conflict? true})))))
 
+(deftest conflict-labels-test
+  (testing "no conflicts"
+    (is (= [] (sync-repos/conflict-labels {:dirty-conflict? :na :main-conflict? false :branch-conflict? :na}))))
+  (testing "always dirty, main, branch order regardless of which are present"
+    (is (= ["dirty" "main" "branch"]
+           (sync-repos/conflict-labels {:dirty-conflict? true :main-conflict? true :branch-conflict? true})))
+    (is (= ["main" "branch"]
+           (sync-repos/conflict-labels {:dirty-conflict? :na :main-conflict? true :branch-conflict? true})))
+    (is (= ["dirty"]
+           (sync-repos/conflict-labels {:dirty-conflict? true :main-conflict? false :branch-conflict? :na})))))
+
 (deftest ->row-test
   (let [row (sync-repos/->row {:repo "system" :branch "main" :dirty? false :dirty-conflict? :na
                                 :main-conflict? false :branch-conflict? true})]
     (is (= "system" (nth row 0)))
     (is (str/includes? (nth row 1) "✗"))
     (is (= "main" (nth row 2)))
-    (is (= ["no" "NA" "no" "yes"] (subvec (vec row) 3))))
-  (testing "dirty is highlighted, everything else isn't"
-    (let [row (sync-repos/->row {:repo "system" :branch "main" :dirty? true :dirty-conflict? :na
+    (is (str/includes? (nth row 3) "branch")))
+  (testing "conflicts are highlighted, not plain text"
+    (let [row (sync-repos/->row {:repo "system" :branch "main" :dirty? true :dirty-conflict? true
                                   :main-conflict? false :branch-conflict? :na})]
-      (is (not= "yes" (nth row 3)) "colored, not a plain \"yes\"")
-      (is (str/includes? (nth row 3) "yes")))))
+      (is (not= "dirty" (nth row 3)) "colored, not plain text")
+      (is (str/includes? (nth row 3) "dirty"))))
+  (testing "no conflicts reads as \"none\", not blank"
+    (let [row (sync-repos/->row {:repo "system" :branch "main" :dirty? false :dirty-conflict? :na
+                                  :main-conflict? false :branch-conflict? :na})]
+      (is (= "none" (nth row 3))))))
 
 (deftest ->csv-test
   (is (= "a,b\nc,d" (sync-repos/->csv [["a" "b"] ["c" "d"]]))))
