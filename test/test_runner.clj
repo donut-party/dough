@@ -5,6 +5,7 @@
    [donut.project-management.deps-test]
    [donut.project-management.rebuild-test-app-test]
    [donut.project-management.structure-test]
+   [donut.project-management.sync-repos-test]
    [donut.project-management.versions-test]))
 
 (defn -main
@@ -13,6 +14,7 @@
                                           'donut.project-management.deps-test
                                           'donut.project-management.rebuild-test-app-test
                                           'donut.project-management.structure-test
+                                          'donut.project-management.sync-repos-test
                                           'donut.project-management.versions-test)]
     (when (pos? (+ fail error))
       (System/exit 1))))

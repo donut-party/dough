@@ -31,3 +31,16 @@
   ([framework-root repo-name]
    (-> (fs/path framework-root (str repo-name))
        fs/normalize)))
+
+(defn sibling-repo-paths
+  "Every git repo in `root` other than `this-repo`: the libraries, tooling,
+  and test apps the sync-repos task might touch. A directory counts as a
+  repo if it has a `.git` dir; scratch/generated dirs like template-test
+  that don't are skipped automatically."
+  ([] (sibling-repo-paths (framework-root) (project-management-root)))
+  ([root this-repo]
+   (->> (fs/list-dir root)
+        (filter fs/directory?)
+        (remove #(fs/same-file? % this-repo))
+        (filter #(fs/exists? (fs/path % ".git")))
+        (sort-by fs/file-name))))

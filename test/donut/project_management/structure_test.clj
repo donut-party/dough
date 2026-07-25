@@ -18,3 +18,14 @@
   (testing "this repo is inside the framework root"
     (is (= (str (structure/project-management-root))
            (str (structure/repo-path "project-management"))))))
+
+(deftest sibling-repo-paths-test
+  (fs/with-temp-dir [root {}]
+    (let [this-repo (fs/path root "project-management")]
+      (fs/create-dirs (fs/path this-repo ".git"))
+      (fs/create-dirs (fs/path root "system" ".git"))
+      (fs/create-dirs (fs/path root "endpoint" ".git"))
+      (fs/create-dirs (fs/path root "template-test")) ; generated, never a git repo
+      (fs/create-file (fs/path root "some-file"))      ; not a directory at all
+      (is (= ["endpoint" "system"]
+             (mapv fs/file-name (structure/sibling-repo-paths root this-repo)))))))
