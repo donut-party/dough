@@ -41,8 +41,7 @@
    :default-branch (git/default-branch repo-dir)
    :dirty?         (git/dirty? repo-dir)
    :mtime          (most-recent-mtime repo-dir)
-   :commit-date    (git/last-commit-date repo-dir)
-   :commit-msg     (git/last-commit-subject repo-dir)})
+   :commit-date    (git/last-commit-date repo-dir)})
 
 (defn needs-attention?
   "A repo is worth reporting if it's not sitting clean on its default
@@ -50,12 +49,13 @@
   [{:keys [branch default-branch dirty?]}]
   (or dirty? (not= branch default-branch)))
 
-(def columns ["branch" "status" "modified" "committed"])
+(def columns ["repo name" "branch" "dirty?" "modified" "committed"])
 
 (defn ->row
-  [{:keys [branch dirty? mtime commit-date]}]
-  [branch
-   (if dirty? (bling/bling [:warning "dirty"]) "clean")
+  [{:keys [repo branch dirty? mtime commit-date]}]
+  [repo
+   branch
+   (if dirty? (bling/bling [:warning "yes"]) "no")
    mtime
    commit-date])
 
@@ -64,22 +64,20 @@
   (str/join "\n" (map #(str/join "," %) rows)))
 
 (defn print-report!
-  [{:keys [repo commit-msg] :as status}]
-  (bling/print-bling [:bold.positive (str "\n" repo "\n")])
-  (gum/gum :table :in (->csv [(->row status)]) :as :ignored :print true
+  [statuses]
+  (gum/gum :table :in (->csv (map ->row statuses)) :as :ignored :print true
            :columns columns
            :border.foreground "212"
            :header.foreground "212"
            :selected.foreground ""
-           :selected.background "")
-  (println commit-msg))
+           :selected.background ""))
 
 (defn -main
   [& _]
   (let [statuses (->> (structure/sibling-repo-paths)
                        (map repo-status)
-                       (filter needs-attention?))]
+                       (filter needs-attention?)
+                       (sort-by :repo))]
     (if (empty? statuses)
       (bling/print-bling [:muted "\nNothing to pick up -- every repo is clean and on its default branch.\n"])
-      (doseq [status statuses]
-        (print-report! status)))))
+      (print-report! statuses))))

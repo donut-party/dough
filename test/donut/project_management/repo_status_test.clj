@@ -21,12 +21,14 @@
     (is (true? (repo-status/needs-attention? {:branch "feature" :default-branch "main" :dirty? false})))))
 
 (deftest ->row-test
-  (let [row (repo-status/->row {:branch "feature" :dirty? false :mtime "2027-05-31" :commit-date "2027-05-21"})]
-    (is (= ["feature" "clean" "2027-05-31" "2027-05-21"] row)))
-  (testing "dirty is highlighted, not a plain \"dirty\""
-    (let [row (repo-status/->row {:branch "main" :dirty? true :mtime "2027-05-31" :commit-date "2027-05-21"})]
-      (is (not= "dirty" (nth row 1)))
-      (is (str/includes? (nth row 1) "dirty")))))
+  (let [row (repo-status/->row {:repo "graphputer" :branch "feature" :dirty? false
+                                 :mtime "2027-05-31" :commit-date "2027-05-21"})]
+    (is (= ["graphputer" "feature" "no" "2027-05-31" "2027-05-21"] row)))
+  (testing "dirty is highlighted, not a plain \"yes\""
+    (let [row (repo-status/->row {:repo "graphputer" :branch "main" :dirty? true
+                                   :mtime "2027-05-31" :commit-date "2027-05-21"})]
+      (is (not= "yes" (nth row 2)))
+      (is (str/includes? (nth row 2) "yes")))))
 
 (deftest ->csv-test
   (is (= "a,b\nc,d" (repo-status/->csv [["a" "b"] ["c" "d"]]))))
@@ -85,7 +87,6 @@
       (is (= "main" (:branch status)))
       (is (= "main" (:default-branch status)))
       (is (false? (:dirty? status)))
-      (is (= "initial commit" (:commit-msg status)))
       (is (false? (repo-status/needs-attention? status))))))
 
 (deftest repo-status-dirty-test
