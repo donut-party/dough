@@ -19,7 +19,7 @@ Tasks are babashka tasks defined in `bb.edn`, runnable from any directory via `b
 - `bin/run` - open an interactive task picker (gum, via bblgum)
 - `bin/run rebuild-test-app` - install local donut libs, refresh the donut CLI, and rebuild `../template-test` so changes across repos can be tested together
 - `bin/run regenerate-legacy` - older template-test regeneration flow (npm i, git init, entity scaffold), superseded by `rebuild-test-app`
-- `bin/run sync-repos` - rebase every sibling donut repo off its GitHub remote and print a report; see `plans/sync/prompt.md` for the original spec
+- `bin/run sync-repos` - clone (via SSH) and rebase every repo in the donut-party GitHub org, and print a report; needs `gh auth login`; see `plans/sync/prompt.md` for the original spec
 - `bin/run test` - run the unit tests in `test/`
 
 ## Structure
@@ -31,7 +31,8 @@ Tasks are babashka tasks defined in `bb.edn`, runnable from any directory via `b
   - `brew.clj` — locally-installed homebrew formula path helpers
   - `rebuild_test_app.clj` - implements the `rebuild-test-app` task (step plans are data; pure fns are tested)
   - `regenerate_legacy.clj` - implements the `regenerate-legacy` task
-  - `git.clj` — impure git CLI wrappers (fetch, rebase, stash, etc.) used by `sync-repos`
+  - `git.clj` — impure git CLI wrappers (fetch, rebase, stash, clone, etc.) used by `sync-repos`
+  - `github.clj` — wraps `gh api` to list the donut-party org's repos; the source of truth for which repos `sync-repos` touches
   - `sync_repos.clj` - implements the `sync-repos` task; rebases are all-or-nothing per repo (see its docstring)
   - `menu.clj` - the interactive task picker `bin/run` shows when called with no arguments
 - `test/` — unit tests, run by `bin/run test` (runner: `test/test_runner.clj`)

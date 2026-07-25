@@ -22,14 +22,29 @@
     (is (false? (sync-repos/synced? {:main-conflict? false :branch-conflict? :na :dirty-conflict? true})))))
 
 (deftest ->row-test
-  (let [row (sync-repos/->row {:repo "system" :dirty? false :dirty-conflict? :na
+  (let [row (sync-repos/->row {:repo "system" :branch "main" :dirty? false :dirty-conflict? :na
                                 :main-conflict? false :branch-conflict? true})]
-    (is (= "system" (first row)))
-    (is (str/includes? (second row) "✗"))
-    (is (= ["no" "NA" "no" "yes"] (rest (rest row))))))
+    (is (= "system" (nth row 0)))
+    (is (= "main" (nth row 1)))
+    (is (str/includes? (nth row 2) "✗"))
+    (is (= ["no" "NA" "no" "yes"] (subvec (vec row) 3))))
+  (testing "dirty is highlighted, everything else isn't"
+    (let [row (sync-repos/->row {:repo "system" :branch "main" :dirty? true :dirty-conflict? :na
+                                  :main-conflict? false :branch-conflict? :na})]
+      (is (not= "yes" (nth row 3)) "colored, not a plain \"yes\"")
+      (is (str/includes? (nth row 3) "yes")))))
 
 (deftest ->csv-test
   (is (= "a,b\nc,d" (sync-repos/->csv [["a" "b"] ["c" "d"]]))))
+
+(deftest remote-repo-name-test
+  (is (= "box.identity" (sync-repos/remote-repo-name "git@github.com:donut-party/box.identity.git")))
+  (testing "org/user segment doesn't matter, only the repo name does"
+    (is (= "system" (sync-repos/remote-repo-name "git@github.com:donut-power/system.git")))
+    (is (= "system" (sync-repos/remote-repo-name "git@github.com:donut-party/system.git"))))
+  (testing "https remotes work too"
+    (is (= "system" (sync-repos/remote-repo-name "https://github.com/donut-party/system.git"))))
+  (is (nil? (sync-repos/remote-repo-name nil))))
 
 ;; ---------------------------------------------------------------------------
 ;; integration: sync-repo! against real temp git repos
@@ -94,7 +109,7 @@
   (with-repo [clone]
     (let [result (sync-repos/sync-repo! clone)]
       (is (= {:dirty? false :dirty-conflict? :na :main-conflict? false :branch-conflict? :na}
-             (dissoc result :repo)))
+             (dissoc result :repo :branch)))
       (is (true? (sync-repos/synced? result)))
       (is (= "main" (git/current-branch clone))))))
 

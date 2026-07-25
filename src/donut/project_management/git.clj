@@ -1,7 +1,8 @@
 (ns donut.project-management.git
-  "Thin wrappers over the git CLI for the sync-repos task. Every fn takes a
-  repo dir as its first arg and shells out there; none of them are pure, and
-  none of them throw on a non-zero exit (callers branch on that instead)."
+  "Thin wrappers over the git CLI, used by the sync-repos and repo-status
+  tasks. Every fn takes a repo dir as its first arg and shells out there;
+  none of them are pure, and none of them throw on a non-zero exit (callers
+  branch on that instead)."
   (:require
    [babashka.process :as ps]
    [clojure.string :as str]))
@@ -92,3 +93,18 @@
   "Force-points `branch` at `sha` without checking it out."
   [dir branch sha]
   (sh dir "update-ref" (str "refs/heads/" branch) sha))
+
+(defn clone!
+  "Clones url into dir/name."
+  [dir url name]
+  (sh dir "clone" url name))
+
+(defn last-commit-date
+  "The committer date of HEAD, as YYYY-MM-DD."
+  [dir]
+  (str/trim (:out (sh dir "log" "-1" "--format=%cd" "--date=short"))))
+
+(defn last-commit-subject
+  "The subject line (first line) of HEAD's commit message."
+  [dir]
+  (str/trim (:out (sh dir "log" "-1" "--format=%s"))))
