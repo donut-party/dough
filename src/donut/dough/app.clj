@@ -1,10 +1,11 @@
 (ns donut.dough.app
   "Implements `dough app <name> [--skip-devtools]`: generates a fresh donut
   app at <framework-root>/<name> from the local checkouts (through `dough
-  cli`), then checks it: backend tests, cljs compile, cljs release build,
-  and tailwind build, all against the checkouts via the :donut/local alias
-  (`dough link`). Answers \"does this change work in a new app?\" in one
-  command. Exits non-zero if any check fails."
+  cli`), then checks it: backend tests, a cljs compile of every shadow
+  build, the bakery cljs release build, and tailwind build, all against the
+  checkouts via the :donut/local alias (`dough link`). Answers \"does this
+  change work in a new app?\" in one command. Exits non-zero if any check
+  fails."
   (:require
    [babashka.fs :as fs]
    [babashka.process :as ps]
@@ -50,14 +51,30 @@
     (when (fs/exists? f)
       (set (keys (:builds (edn/read-string {:default tagged-literal} (slurp f))))))))
 
+(defn deps-aliases
+  [app-dir]
+  (let [f (fs/file app-dir "deps.edn")]
+    (when (fs/exists? f)
+      (set (keys (:aliases (edn/read-string {:default tagged-literal} (slurp f))))))))
+
 (defn checks
-  "The checks to run in a generated app, given its shadow-cljs builds."
-  [builds]
-  (let [alias (str "-A" link/alias-key)]
-    (cond-> [{:label "backend tests" :cmd ["clojure" (str "-X:test" link/alias-key)]}]
-      (contains? builds :dev) (conj {:label "cljs compile (dev)" :cmd ["npx" "shadow-cljs" alias "compile" "dev"]})
-      (contains? builds :app) (conj {:label "cljs release (app)" :cmd ["npx" "shadow-cljs" alias "release" "app"]})
-      true                    (conj {:label "tailwind build" :cmd ["npm" "run" "tailwind:release"]}))))
+  "The checks to run in a generated app, given its shadow-cljs builds and
+  deps.edn aliases: backend tests, a cljs compile of every build, the
+  bakery release build (`clojure -X:cljs:release`, which bakes the backend
+  routes into the :app build) when the app has a :release alias, and
+  tailwind."
+  [builds aliases]
+  (cond-> [{:label "backend tests" :cmd ["clojure" (str "-X:test" link/alias-key)]}]
+    true
+    (into (for [build (sort builds)]
+            {:label (str "cljs compile (" (name build) ")")
+             :cmd   ["npx" "shadow-cljs" (str "-A" link/alias-key) "compile" (name build)]}))
+
+    (contains? aliases :release)
+    (conj {:label "cljs release (bakery)" :cmd ["clojure" (str "-X:cljs:release" link/alias-key)]})
+
+    true
+    (conj {:label "tailwind build" :cmd ["npm" "run" "tailwind:release"]})))
 
 (defn- run-step!
   [{:keys [label dir cli cmd]} root app-dir]
@@ -97,7 +114,7 @@
         (when-not (zero? exit)
           (throw (ex-info (str (:label step) " failed (exit " exit "); stopping") {:babashka/exit 1})))))
     (let [results (mapv (fn [check] (assoc check :exit (run-step! check root app-dir)))
-                        (checks (shadow-builds app-dir)))]
+                        (checks (shadow-builds app-dir) (deps-aliases app-dir)))]
       (print-summary! results)
       results)))
 

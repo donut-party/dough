@@ -5,14 +5,17 @@
    [donut.dough.app :as app]))
 
 (deftest checks-test
-  (testing "cljs checks follow the builds the app's shadow-cljs.edn defines"
+  (testing "every shadow build compiles, and a :release alias runs bakery's release build"
     (is (= [["backend tests" ["clojure" "-X:test:donut/local"]]
+            ["cljs compile (app)" ["npx" "shadow-cljs" "-A:donut/local" "compile" "app"]]
+            ["cljs compile (app-devtools)" ["npx" "shadow-cljs" "-A:donut/local" "compile" "app-devtools"]]
             ["cljs compile (dev)" ["npx" "shadow-cljs" "-A:donut/local" "compile" "dev"]]
-            ["cljs release (app)" ["npx" "shadow-cljs" "-A:donut/local" "release" "app"]]
+            ["cljs release (bakery)" ["clojure" "-X:cljs:release:donut/local"]]
             ["tailwind build" ["npm" "run" "tailwind:release"]]]
-           (mapv (juxt :label :cmd) (app/checks #{:dev :app}))))
+           (mapv (juxt :label :cmd) (app/checks #{:dev :app :app-devtools} #{:dev :cljs :release})))))
+  (testing "no builds and no :release alias leaves backend tests and tailwind"
     (is (= ["backend tests" "tailwind build"]
-           (mapv :label (app/checks nil))))))
+           (mapv :label (app/checks nil nil))))))
 
 (deftest setup-steps-test
   (let [steps (app/setup-steps "demo" "0.0.48")]
