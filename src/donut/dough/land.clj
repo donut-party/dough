@@ -76,10 +76,25 @@
     (git! dir "push" "origin" (str "HEAD:" (git/default-branch dir)))
     (process/tee (format "   %s: committed and pushed %s" (fs/file-name dir) (str/join ", " paths)) nil)))
 
+(defn- require-clean-default-branch!
+  "Pins are committed and pushed to the default branch, so the repo must be
+  on it with nothing uncommitted: otherwise someone's in-progress work
+  would be committed or pushed along with the pins."
+  [dir]
+  (let [default (git/default-branch dir)]
+    (when (not= default (git/current-branch dir))
+      (fail! (str (fs/file-name dir) " is on " (git/current-branch dir) ", not " default
+                  "; check out " default " and rerun to pin")))
+    (when (git/dirty? dir)
+      (fail! (str (fs/file-name dir) " has uncommitted changes; commit or stash them and rerun to pin")))
+    (git! dir "pull" "--ff-only" "origin" default)))
+
 (defn pin!
   [framework-root]
   (let [template (structure/repo-path framework-root registry/template-repo)
         cli      (structure/repo-path framework-root "donut-cli")]
+    (require-clean-default-branch! template)
+    (require-clean-default-branch! cli)
     (pin/pin-template! {})
     (commit-and-push! template [(str (fs/relativize template (pin/template-deps-path)))]
                       "Pin donut libraries to their newest releases")
