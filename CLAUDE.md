@@ -21,6 +21,9 @@ Tasks are babashka tasks defined in `bb.edn`. `bin/dough` runs them from any dir
 - `dough link` - write a `:donut/local` alias into `~/.clojure/deps.edn` that overrides every donut library (found through each `deps.edn`'s `:donut/lib`) with its checkout; any app then runs against the checkouts with `clojure -M:dev:donut/local`
 - `dough cli <args>` - run the donut CLI from `../donut-cli`, with generate, generators and the app template read from their checkouts; `--lib` libraries resolve from checkouts through `DONUT_LOCAL_LIBS`
 - `dough app <name> [--skip-devtools]` - generate `../<name>` through `dough cli` and check it against the checkouts: backend tests, cljs compile and release, tailwind. Only deletes a directory it made (marked by `.dough-app`)
+- `dough release [repo...] [--dry-run]` - release every library repo whose default branch is ahead of `release` (or just the named ones), in dependency order: push the default branch's tip to `release`, wait for that CI run to pass, then wait for each module's `<version-prefix>.<commit count>` to appear on Clojars. Stops at the first failure. A repo whose `release` has commits not on its default branch is reported BLOCKED
+- `dough pin [--dry-run]` - pin the app template's `party.donut/*` deps to their newest Clojars releases (unreleased libraries keep their pin), and the CLI to the newest generate/generators and the template's main SHA
+- `dough change land <name> [--dry-run]` - ship a change set: merge and release its library repos in dependency order, merge the template, `pin` (committing and pushing the template and CLI), merge the remaining repos, and delete the change set. Rerunnable after a failure
 - `dough cli-update-deps` - point the donut CLI at the newest generate/generators on Clojars and the template's main SHA
 - `dough cli-bump` - bump the donut CLI's patch version
 - `dough cli-publish` - update the CLI's deps, bump its version, commit, tag, and push, which kicks off a CLI release

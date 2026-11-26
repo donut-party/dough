@@ -9,6 +9,7 @@
    [donut.dough.deps-test]
    [donut.dough.link-test]
    [donut.dough.registry-test]
+   [donut.dough.release-test]
    [donut.dough.status-test]
    [donut.dough.structure-test]
    [donut.dough.sync-test]
@@ -23,6 +24,7 @@
     donut.dough.deps-test
     donut.dough.link-test
     donut.dough.registry-test
+    donut.dough.release-test
     donut.dough.status-test
     donut.dough.structure-test
     donut.dough.sync-test

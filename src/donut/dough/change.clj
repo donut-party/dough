@@ -7,6 +7,7 @@
    [clojure.string :as str]
    [donut.dough.change-set :as change-set]
    [donut.dough.git :as git]
+   [donut.dough.land :as land]
    [donut.dough.structure :as structure]))
 
 (def usage
@@ -14,7 +15,8 @@
        dough change list
        dough change push <name>
        dough change clone <name> [--shallow]
-       dough change done <name>")
+       dough change done <name>
+       dough change land <name> [--dry-run]")
 
 (defn- fail!
   [msg]
@@ -134,4 +136,7 @@
     "push"  (push! (first args))
     "clone" (clone! (first (remove #{"--shallow"} args)) {:shallow? (boolean (some #{"--shallow"} args))})
     "done"  (done! (first args))
+    "land"  (land/land! (structure/framework-root) (change-set/changes-dir)
+                        (first (remove #{"--dry-run"} args))
+                        {:dry-run? (boolean (some #{"--dry-run"} args))})
     (fail! usage)))

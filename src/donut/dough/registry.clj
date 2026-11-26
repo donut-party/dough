@@ -13,7 +13,8 @@
 (def template-lib 'party.donut/single-page-app)
 (def template-repo "single-page-app-template")
 
-(defn- donut-lib
+(defn donut-lib
+  "The `:donut/lib` map of a deps.edn file, or nil."
   [deps-edn-file]
   (try
     (:donut/lib (edn/read-string {:default tagged-literal} (slurp (fs/file deps-edn-file))))
