@@ -1,5 +1,5 @@
-(ns donut.project-management.git
-  "Thin wrappers over the git CLI, used by the sync-repos and repo-status
+(ns donut.dough.git
+  "Thin wrappers over the git CLI, used by the sync and status
   tasks. Every fn takes a repo dir as its first arg and shells out there;
   none of them are pure, and none of them throw on a non-zero exit (callers
   branch on that instead)."
@@ -87,7 +87,7 @@
   anything to stash."
   [dir]
   (let [result (sh dir "stash" "push" "--include-untracked"
-                    "-m" "donut sync-repos autostash")]
+                    "-m" "dough sync autostash")]
     (and (success? result)
          (not (str/includes? (:out result) "No local changes to save")))))
 

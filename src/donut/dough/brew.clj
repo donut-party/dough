@@ -1,12 +1,10 @@
-(ns donut.project-management.brew
+(ns donut.dough.brew
   "Helpers for working with locally-installed homebrew formulas, e.g. to
-  overwrite an installed formula's files with local working copies.
-
-  Generalized from donut-cli/develop's copy-local."
+  overwrite an installed formula's files with local working copies."
   (:require
    [babashka.fs :as fs]
    [clojure.string :as str]
-   [donut.bb-utils.process :as process]))
+   [donut.dough.process :as process]))
 
 (defn repository
   []
@@ -38,3 +36,12 @@
                      (throw (ex-info (str "no installed versions of formula " formula)
                                      {:formula formula})))]
      (fs/path (cellar-path repository formula) version "libexec"))))
+
+(defn copy-local!
+  "Replaces the brew-installed donut CLI's files with the local working copy
+  at `source` (donut-cli/donut-cli), so `donut` runs the local code."
+  [source]
+  (let [destination (fs/path (libexec-path "donut") "donut-cli")]
+    (fs/delete-tree destination)
+    (fs/copy-tree source destination)
+    (str destination)))

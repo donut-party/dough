@@ -1,8 +1,8 @@
-(ns donut.project-management.structure-test
+(ns donut.dough.structure-test
   (:require
    [babashka.fs :as fs]
    [clojure.test :refer [deftest is testing]]
-   [donut.project-management.structure :as structure]))
+   [donut.dough.structure :as structure]))
 
 (deftest repo-path-test
   (is (= (str (fs/path "/tmp/framework" "app-devtools"))
@@ -13,15 +13,15 @@
 
 (deftest framework-root-test
   (testing "framework root is the parent of this repo"
-    (is (= (str (fs/parent (structure/project-management-root)))
+    (is (= (str (fs/parent (structure/dough-root)))
            (structure/framework-root))))
   (testing "this repo is inside the framework root"
-    (is (= (str (structure/project-management-root))
-           (str (structure/repo-path "project-management"))))))
+    (is (= (str (structure/dough-root))
+           (str (structure/repo-path "dough"))))))
 
 (deftest sibling-repo-paths-test
   (fs/with-temp-dir [root {}]
-    (let [this-repo (fs/path root "project-management")]
+    (let [this-repo (fs/path root "dough")]
       (fs/create-dirs (fs/path this-repo ".git"))
       (fs/create-dirs (fs/path root "system" ".git"))
       (fs/create-dirs (fs/path root "endpoint" ".git"))

@@ -1,5 +1,5 @@
-(ns donut.project-management.repo-status-test
-  "Pure-fn tests plus integration tests that exercise repo-status against a
+(ns donut.dough.status-test
+  "Pure-fn tests plus integration tests that exercise status against a
   real temp git repo -- most-recent-mtime and the git plumbing are only
   trustworthy if proven against an actual working tree."
   (:require
@@ -7,7 +7,7 @@
    [babashka.process :as ps]
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
-   [donut.project-management.repo-status :as repo-status]))
+   [donut.dough.status :as repo-status]))
 
 ;; ---------------------------------------------------------------------------
 ;; pure fns

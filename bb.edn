@@ -1,15 +1,21 @@
 {:paths ["src" "resources" "test"]
- :tasks {rebuild-test-app  {:doc  "Install local donut libs, refresh the donut CLI, and rebuild template-test so changes across repos can be tested together"
-                            :task donut.project-management.rebuild-test-app/-main}
-         regenerate-legacy {:doc  "Older template-test regeneration flow (npm i, git init, entity scaffold), superseded by rebuild-test-app"
-                            :task donut.project-management.regenerate-legacy/-main}
-         repo-status       {:doc  "Report every sibling donut repo that isn't clean and on its default branch"
-                            :task donut.project-management.repo-status/-main}
-         sync-repos        {:doc  "Clone/rebase every donut-party org repo off GitHub and print a report (needs `gh auth login`)"
-                            :task donut.project-management.sync-repos/-main}
-         test              {:doc  "Run unit tests"
-                            :task test-runner/-main}}
+ :tasks {brew-formula     {:doc  "Render ../homebrew-brew/Formula/donut.rb for the donut CLI's current version"
+                           :task donut.dough.brew-formula/-main}
+         cli-bump         {:doc  "Bump the donut CLI's patch version"
+                           :task donut.dough.cli-bump/-main}
+         cli-publish      {:doc  "Update the CLI's deps, bump its version, commit, tag, and push, which kicks off a CLI release"
+                           :task donut.dough.cli-publish/-main}
+         cli-update-deps  {:doc  "Point the donut CLI at the newest generate/generators on Clojars and the template's main SHA"
+                           :task donut.dough.cli-update-deps/-main}
+         rebuild-test-app {:doc  "Install local donut libs, refresh the donut CLI, and rebuild template-test so changes across repos can be tested together"
+                           :task donut.dough.rebuild-test-app/-main}
+         status           {:doc  "Report every sibling donut repo that isn't clean and on its default branch"
+                           :task donut.dough.status/-main}
+         sync             {:doc  "Clone/rebase every donut-party org repo off GitHub and print a report (needs `gh auth login`)"
+                           :task donut.dough.sync/-main}
+         test             {:doc  "Run unit tests"
+                           :task test-runner/-main}}
  :deps  {org.clojure/clojure          {:mvn/version "1.12.4"}
          io.github.lispyclouds/bblgum {:git/sha "881a426d9df9df40eb305ceaeb3996ea1c7ae0d3"}
-         party.donut/bb-utils         {:local/root "../bb-utils"}
+         io.github.paintparty/bling   {:mvn/version "0.10.0"}
          rewrite-clj/rewrite-clj      {:mvn/version "1.2.54"}}}

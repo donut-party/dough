@@ -1,5 +1,5 @@
-(ns donut.project-management.menu
-  "Interactive task picker shown by `bin/run` when called with no arguments,
+(ns donut.dough.menu
+  "Interactive task picker shown by `bin/dough` when called with no arguments,
   built on gum (via bblgum) instead of babashka's plain `bb tasks` listing."
   (:require
    [babashka.fs :as fs]
@@ -7,14 +7,14 @@
    [bblgum.core :as gum]
    [bling.core :as bling]
    [clojure.edn :as edn]
-   [donut.project-management.structure :as structure]))
+   [donut.dough.structure :as structure]))
 
 (def ^:private unit-separator "")
 
 (defn- bb-edn-path
   []
   (or (System/getProperty "babashka.config")
-      (str (fs/path (structure/project-management-root) "bb.edn"))))
+      (str (fs/path (structure/dough-root) "bb.edn"))))
 
 (defn read-tasks
   "Task names and docstrings from bb.edn's :tasks map, so the menu stays in
@@ -46,7 +46,7 @@
   (let [tasks      (read-tasks)
         name-width (->> tasks (map (comp count :name)) (apply max))
         {:keys [status result]} (gum/gum :choose (mapv (partial choice name-width) tasks)
-                                          :header "donut project-management"
+                                          :header "dough"
                                           :label-delimiter unit-separator
                                           :height (+ (count tasks) 2)
                                           :cursor.foreground "212"
@@ -60,5 +60,5 @@
       (bling/print-bling [:muted "\nNo task selected.\n"])
 
       :else
-      (do (bling/print-bling [:warning "\nCouldn't open an interactive picker (no TTY?). Run bin/run <task-name> directly:\n"])
+      (do (bling/print-bling [:warning "\nCouldn't open an interactive picker (no TTY?). Run dough <task-name> directly:\n"])
           (print-plain-list tasks)))))

@@ -1,7 +1,7 @@
-(ns donut.project-management.deps-test
+(ns donut.dough.deps-test
   (:require
    [clojure.test :refer [deftest is testing]]
-   [donut.project-management.deps :as deps]))
+   [donut.dough.deps :as deps]))
 
 (def deps-string
   "{:deps {party.donut/generate {:mvn/version \"1.0.100\"} ;; keep me

@@ -1,4 +1,4 @@
-(ns donut.project-management.sync-repos-test
+(ns donut.dough.sync-test
   "Pure-fn tests plus integration tests that exercise sync-repo! against real
   temp git repos -- the branching logic (conflict vs. clean, dirty vs. not)
   is only trustworthy if it's proven against actual git behavior."
@@ -7,8 +7,8 @@
    [babashka.process :as ps]
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
-   [donut.project-management.git :as git]
-   [donut.project-management.sync-repos :as sync-repos]))
+   [donut.dough.git :as git]
+   [donut.dough.sync :as sync-repos]))
 
 ;; ---------------------------------------------------------------------------
 ;; pure fns

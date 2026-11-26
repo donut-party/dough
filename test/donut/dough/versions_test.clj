@@ -1,8 +1,8 @@
-(ns donut.project-management.versions-test
+(ns donut.dough.versions-test
   (:require
    [babashka.fs :as fs]
    [clojure.test :refer [deftest is testing]]
-   [donut.project-management.versions :as versions]))
+   [donut.dough.versions :as versions]))
 
 (deftest parse-test
   (is (= [1 2 3] (versions/parse "1.2.3")))

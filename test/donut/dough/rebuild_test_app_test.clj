@@ -1,12 +1,7 @@
-(ns donut.project-management.rebuild-test-app-test
+(ns donut.dough.rebuild-test-app-test
   (:require
    [clojure.test :refer [deftest is testing]]
-   [donut.project-management.rebuild-test-app :as rebuild-test-app]))
-
-(deftest donut-cli-steps-test
-  (is (= [["donut-cli" "./develop/bin/develop update-deps"]
-          ["donut-cli" "./develop/bin/develop copy-local"]]
-         (mapv (juxt :repo :cmd) rebuild-test-app/donut-cli-steps))))
+   [donut.dough.rebuild-test-app :as rebuild-test-app]))
 
 (deftest regenerate-steps-test
   (is (= [["."             "rm -rf template-test"]

@@ -1,12 +1,10 @@
-(ns donut.project-management.deps
+(ns donut.dough.deps
   "Pure helpers for editing dependency coordinates in deps.edn / bb.edn
   strings, preserving formatting and comments.
 
-  Consolidates donut.bb-utils.project/update-dependency-version and
-  donut-cli/develop's update-git-sha. Unlike those, the search for the
-  coordinate key is confined to the dependency's own coordinate map, so a
-  dependency that lacks the key can't cause the next dependency's entry to
-  be rewritten."
+  The search for the coordinate key is confined to the dependency's own
+  coordinate map, so a dependency that lacks the key can't cause the next
+  dependency's entry to be rewritten."
   (:require
    [rewrite-clj.zip :as z]))
 

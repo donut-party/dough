@@ -1,4 +1,4 @@
-(ns donut.project-management.sync-repos
+(ns donut.dough.sync
   "Syncs every repo in the donut-party GitHub org: clones any that aren't
   checked out locally yet, fetches, then tries to rebase local main onto
   origin's main and, if a different branch is checked out, that branch
@@ -13,9 +13,9 @@
    [bblgum.core :as gum]
    [bling.core :as bling]
    [clojure.string :as str]
-   [donut.project-management.git :as git]
-   [donut.project-management.github :as github]
-   [donut.project-management.structure :as structure]))
+   [donut.dough.git :as git]
+   [donut.dough.github :as github]
+   [donut.dough.structure :as structure]))
 
 (defn remote-repo-name
   "The repo name a remote URL identifies, e.g. \"box.identity\" from
@@ -26,8 +26,8 @@
   (some-> url (str/replace #"\.git$" "") (str/split #"[/:]") last))
 
 (defn repo-descriptors
-  "Every donut-party org repo (see donut.project-management.github) other
-  than this one -- sync-repos doesn't sync itself, since sibling-repo-paths
+  "Every donut-party org repo (see donut.dough.github) other
+  than this one -- sync doesn't sync itself, since sibling-repo-paths
   already excludes it from :local-path lookup, and treating it as
   \"missing\" would have this task try to clone into its own directory --
   paired with its local sibling-repo path if it's already cloned. Sorted
@@ -38,7 +38,7 @@
   That's both the order repos get queued for syncing and the order
   they're reported in."
   []
-  (let [this-repo     (remote-repo-name (git/remote-url (structure/project-management-root) "origin"))
+  (let [this-repo     (remote-repo-name (git/remote-url (structure/dough-root) "origin"))
         local-by-name (into {}
                              (map (fn [dir] [(remote-repo-name (git/remote-url dir "origin")) dir]))
                              (structure/sibling-repo-paths))]

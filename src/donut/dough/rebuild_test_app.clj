@@ -1,4 +1,4 @@
-(ns donut.project-management.rebuild-test-app
+(ns donut.dough.rebuild-test-app
   "Installs local versions of donut libs, refreshes the donut CLI, and
   regenerates the template-test app so that changes across repos can be
   tested together."
@@ -6,18 +6,22 @@
    [babashka.fs :as fs]
    [babashka.process :as ps]
    [clojure.string :as str]
-   [donut.bb-utils.file :as file]
-   [donut.bb-utils.process :as process]
-   [donut.project-management.deps :as deps]
-   [donut.project-management.structure :as structure]))
+   [donut.dough.brew :as brew]
+   [donut.dough.cli-update-deps :as cli-update-deps]
+   [donut.dough.deps :as deps]
+   [donut.dough.file :as file]
+   [donut.dough.process :as process]
+   [donut.dough.structure :as structure]))
 
 (def install-cmd "clj -T:build install")
 
-(def donut-cli-steps
+(defn refresh-donut-cli!
   "Refresh the donut CLI's deps and overwrite the brew-installed CLI with
   the local working copy."
-  [{:repo "donut-cli" :cmd "./develop/bin/develop update-deps"}
-   {:repo "donut-cli" :cmd "./develop/bin/develop copy-local"}])
+  []
+  (cli-update-deps/-main)
+  (process/tee "\n[donut-cli] copy the local CLI over the brew install")
+  (process/tee (brew/copy-local! (fs/path (structure/repo-path "donut-cli") "donut-cli")) nil))
 
 (defn regenerate-steps
   "Rebuild the template-test app with the freshly-installed libs."
@@ -75,7 +79,7 @@
 (defn -main
   []
   (update-generators-dep! (install-lib! "generate"))
-  (run! run-step! donut-cli-steps)
+  (refresh-donut-cli!)
   (let [app-devtools-version (install-lib! "app-devtools")]
     (run! run-step! (regenerate-steps app-devtools-version)))
   (process/tee "\nlocal-test complete" :bold.green))

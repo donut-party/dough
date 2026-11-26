@@ -1,5 +1,5 @@
-(ns donut.project-management.repo-status
-  "Implements the repo-status task: reports every sibling donut repo that's
+(ns donut.dough.status
+  "Implements the status task: reports every sibling donut repo that's
   mid-work -- checked out on a branch other than its default, or dirty --
   so spare-time work across repos is easy to pick back up."
   (:require
@@ -8,8 +8,8 @@
    [bblgum.core :as gum]
    [bling.core :as bling]
    [clojure.string :as str]
-   [donut.project-management.git :as git]
-   [donut.project-management.structure :as structure])
+   [donut.dough.git :as git]
+   [donut.dough.structure :as structure])
   (:import
    [java.time Instant ZoneId]))
 

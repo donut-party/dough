@@ -1,22 +1,29 @@
 (ns test-runner
   (:require
    [clojure.test :as t]
-   [donut.project-management.brew-test]
-   [donut.project-management.deps-test]
-   [donut.project-management.rebuild-test-app-test]
-   [donut.project-management.repo-status-test]
-   [donut.project-management.structure-test]
-   [donut.project-management.sync-repos-test]
-   [donut.project-management.versions-test]))
+   [donut.dough.brew-formula-test]
+   [donut.dough.brew-test]
+   [donut.dough.cli-update-deps-test]
+   [donut.dough.deps-test]
+   [donut.dough.rebuild-test-app-test]
+   [donut.dough.status-test]
+   [donut.dough.structure-test]
+   [donut.dough.sync-test]
+   [donut.dough.versions-test]))
+
+(def test-namespaces
+  '[donut.dough.brew-formula-test
+    donut.dough.brew-test
+    donut.dough.cli-update-deps-test
+    donut.dough.deps-test
+    donut.dough.rebuild-test-app-test
+    donut.dough.status-test
+    donut.dough.structure-test
+    donut.dough.sync-test
+    donut.dough.versions-test])
 
 (defn -main
   [& _]
-  (let [{:keys [fail error]} (t/run-tests 'donut.project-management.brew-test
-                                          'donut.project-management.deps-test
-                                          'donut.project-management.rebuild-test-app-test
-                                          'donut.project-management.repo-status-test
-                                          'donut.project-management.structure-test
-                                          'donut.project-management.sync-repos-test
-                                          'donut.project-management.versions-test)]
+  (let [{:keys [fail error]} (apply t/run-tests test-namespaces)]
     (when (pos? (+ fail error))
       (System/exit 1))))

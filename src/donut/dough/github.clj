@@ -1,6 +1,6 @@
-(ns donut.project-management.github
+(ns donut.dough.github
   "Wraps the `gh` CLI to list an org's repos -- the source of truth
-  sync-repos uses for which repos are \"donut\" repos. That naturally
+  `dough sync` uses for which repos are \"donut\" repos. That naturally
   excludes GitHub wiki companion repos (the API doesn't list those as
   repos at all) and any local checkout whose remote was renamed or
   deleted upstream, without needing to special-case either."

@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+# Runs dough's babashka tasks from any directory. Resolves symlinks, so a
+# link at ~/.local/bin/dough still finds this repo's bb.edn.
+
+DIR="$( cd "$( dirname "$( realpath "$0" )" )/.." && pwd )"
+
+if [ $# -eq 0 ]; then
+  bb --config "$DIR/bb.edn" -e "(require '[donut.dough.menu :as menu]) (menu/-main)"
+else
+  bb --config "$DIR/bb.edn" "$@"
+fi

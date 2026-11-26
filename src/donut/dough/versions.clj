@@ -1,8 +1,7 @@
-(ns donut.project-management.versions
-  "Parse, bump, and persist dotted version strings like \"1.2.3\".
-
-  Generalizes donut-cli/develop's bump-version: any segment can be bumped,
-  and bumping a segment resets the segments after it."
+(ns donut.dough.versions
+  "Parse, bump, and persist dotted version strings like \"1.2.3\". Any
+  segment can be bumped, and bumping a segment resets the segments after
+  it."
   (:require
    [babashka.fs :as fs]
    [clojure.string :as str]))

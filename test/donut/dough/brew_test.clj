@@ -1,8 +1,8 @@
-(ns donut.project-management.brew-test
+(ns donut.dough.brew-test
   (:require
    [babashka.fs :as fs]
    [clojure.test :refer [deftest is]]
-   [donut.project-management.brew :as brew]))
+   [donut.dough.brew :as brew]))
 
 (defn temp-repository
   "creates a fake brew repository with the given formula versions installed"
