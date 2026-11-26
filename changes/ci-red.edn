@@ -1,0 +1,2 @@
+{:description "DON-5 smoke test: deliberately failing branch"
+ :repos {"single-page-app-template" "dough-ci-red"}}

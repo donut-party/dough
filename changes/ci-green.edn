@@ -1,0 +1,2 @@
+{:description "DON-5 smoke test: passing branch"
+ :repos {"single-page-app-template" "main"}}
