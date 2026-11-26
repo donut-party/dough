@@ -1,2 +1,3 @@
-{:description "DON-5 smoke test: passing branch"
- :repos {"single-page-app-template" "main"}}
+{:description "DON-5 smoke test: every public library the app uses, at main"
+ :repos {"compose" "main" "datapotato" "main" "endpoint" "main" "endpoint-test" "main"
+         "frontend" "main" "generate" "main" "single-page-app-template" "main" "sugar" "main" "system" "main"}}
