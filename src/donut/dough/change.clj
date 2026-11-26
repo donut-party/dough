@@ -13,6 +13,7 @@
   "usage: dough change new <name> <repo>... [--description TEXT]
        dough change list
        dough change push <name>
+       dough change clone <name> [--shallow]
        dough change done <name>")
 
 (defn- fail!
@@ -83,6 +84,26 @@
          (fail! (str repo ": push of " branch " failed: " (:err result))))
        (println (format "  %-28s pushed %s" repo branch))))))
 
+(defn git-base
+  "Where repos are cloned from: DOUGH_GIT_BASE (CI sets an https URL with a
+  token), else the donut-party org over SSH."
+  []
+  (or (System/getenv "DOUGH_GIT_BASE") "git@github.com:donut-party"))
+
+(defn clone!
+  "Clones every repo in the change set that isn't checked out yet, on its
+  branch. `--shallow` makes depth-1 clones, enough for CI."
+  ([change-name opts] (clone! (structure/framework-root) (change-set/changes-dir) change-name opts))
+  ([framework-root changes-dir change-name {:keys [shallow? base] :or {base (git-base)}}]
+   (let [{:keys [repos]} (change-set/read-change-set changes-dir change-name)]
+     (doseq [[repo branch] (sort-by key repos)]
+       (if (fs/exists? (structure/repo-path framework-root repo))
+         (println (format "  %-28s already checked out" repo))
+         (let [result (git/clone-branch! framework-root (str base "/" repo ".git") repo branch shallow?)]
+           (when-not (git/success? result)
+             (fail! (str repo ": clone of " branch " failed: " (:err result))))
+           (println (format "  %-28s cloned on %s" repo branch))))))))
+
 (defn unmerged
   "Repos whose change-set branch isn't fully merged into origin's default
   branch (after a fetch)."
@@ -108,8 +129,9 @@
 (defn -main
   [& [command & args]]
   (case command
-    "new"  (new! args)
-    "list" (list!)
-    "push" (push! (first args))
-    "done" (done! (first args))
+    "new"   (new! args)
+    "list"  (list!)
+    "push"  (push! (first args))
+    "clone" (clone! (first (remove #{"--shallow"} args)) {:shallow? (boolean (some #{"--shallow"} args))})
+    "done"  (done! (first args))
     (fail! usage)))

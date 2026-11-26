@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: dough test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeLaGuardo/setup-clojure@13
+        with:
+          bb: latest
+
+      - name: test
+        run: |
+          git config --global user.email ci@example.com
+          git config --global user.name CI
+          bin/dough test

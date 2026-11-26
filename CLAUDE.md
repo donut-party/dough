@@ -31,6 +31,13 @@ Tasks are babashka tasks defined in `bb.edn`. `bin/dough` runs them from any dir
 
 A change spanning several repos is a change set: a committed file, `changes/<name>.edn`, naming the branch for each repo (`{:description "..." :repos {"frontend" "fix" ...}}`). Change sets coordinate development only; nothing published reads them. See `src/donut/dough/change_set.clj`.
 
+`dough change clone <name> [--shallow]` clones any repo in a change set that isn't checked out, on its branch (from `DOUGH_GIT_BASE`, default `git@github.com:donut-party`).
+
+## CI
+
+- `.github/workflows/ci.yml` runs `dough test` on pushes to `main` and on pull requests.
+- `.github/workflows/change-set.yml` tests a change set before release: on pull requests that add or change `changes/*.edn`, or by hand (`gh workflow run change-set.yml -R donut-party/dough -f change=<name>`), it clones the change set's repos with `dough change clone`, then runs `dough app ci-app`. Cloning private repos needs the `DOUGH_READ_TOKEN` org secret: a fine-grained token with read-only Contents access to the donut-party repos.
+
 ## Structure
 
 - `src/donut/dough/`: Clojure source. Task namespaces match their bb task names (`status`, `sync`, `cli-publish`, ...).

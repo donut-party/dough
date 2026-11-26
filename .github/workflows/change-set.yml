@@ -1,0 +1,100 @@
+name: change set
+
+# Tests a change set (changes/<name>.edn) before anything is released:
+# clones every repo in it on its branch, generates a fresh app from those
+# checkouts with `dough app`, and runs the app's tests and builds.
+#
+# Runs on pull requests that add or change a change set, or by hand:
+#   gh workflow run change-set.yml -R donut-party/dough -f change=<name>
+#
+# Private donut-party repos need DOUGH_READ_TOKEN, an org secret holding a
+# fine-grained token with read access to the org's repos. Without it, only
+# public repos can be cloned.
+
+on:
+  pull_request:
+    paths: ['changes/**']
+  workflow_dispatch:
+    inputs:
+      change:
+        description: Change set name (changes/<name>.edn)
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  find:
+    name: Find change sets
+    runs-on: ubuntu-latest
+    outputs:
+      changes: ${{ steps.list.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: list
+        env:
+          INPUT_CHANGE: ${{ inputs.change }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ -n "$INPUT_CHANGE" ]; then
+            changes=$(jq -cn --arg c "$INPUT_CHANGE" '[$c]')
+          else
+            changes=$(git diff --name-only --diff-filter=AM "origin/$BASE_REF...HEAD" -- 'changes/*.edn' \
+                      | xargs -r -n1 basename | sed 's/\.edn$//' | jq -R . | jq -sc .)
+          fi
+          echo "change sets: $changes"
+          echo "changes=$changes" >> "$GITHUB_OUTPUT"
+
+  app:
+    name: dough app (${{ matrix.change }})
+    needs: find
+    if: needs.find.outputs.changes != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        change: ${{ fromJson(needs.find.outputs.changes) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CHANGE: ${{ matrix.change }}
+      DOUGH_GIT_BASE: https://x-access-token:${{ secrets.DOUGH_READ_TOKEN || github.token }}@github.com/donut-party
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: dough
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: DeLaGuardo/setup-clojure@13
+        with:
+          cli: '1.12.0.1495'
+          bb: latest
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gitlibs
+            ~/.deps.clj
+          key: ${{ runner.os }}-change-set-${{ hashFiles('dough/changes/*.edn') }}
+          restore-keys: |
+            ${{ runner.os }}-change-set-
+
+      - name: Clone the change set's repos
+        run: |
+          dough/bin/dough change clone "$CHANGE" --shallow
+          # dough app runs the CLI from its checkout
+          [ -d donut-cli ] || git clone --depth 1 "$DOUGH_GIT_BASE/donut-cli.git" donut-cli
+
+      - name: Generate and check an app
+        run: dough/bin/dough app ci-app

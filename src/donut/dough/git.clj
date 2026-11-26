@@ -113,6 +113,12 @@
   [dir url name]
   (sh dir "clone" url name))
 
+(defn clone-branch!
+  "Clones url into dir/name with `branch` checked out; depth 1 if
+  `shallow?`."
+  [dir url name branch shallow?]
+  (apply sh dir (concat ["clone" "--branch" branch] (when shallow? ["--depth" "1"]) [url name])))
+
 (defn last-commit-date
   "The committer date of HEAD, as YYYY-MM-DD."
   [dir]
