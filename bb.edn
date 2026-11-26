@@ -1,18 +1,22 @@
 {:paths ["src" "resources" "test"]
- :tasks {brew-formula     {:doc  "Render ../homebrew-brew/Formula/donut.rb for the donut CLI's current version"
+ :tasks {app              {:doc  "Generate <framework-root>/<name> from the local checkouts and check it: backend tests, cljs compile and release, tailwind (`app <name> [--skip-devtools]`)"
+                           :task donut.dough.app/-main}
+         brew-formula     {:doc  "Render ../homebrew-brew/Formula/donut.rb for the donut CLI's current version"
                            :task donut.dough.brew-formula/-main}
          change           {:doc  "Change sets: `change new <name> <repo>...`, `change list`, `change push <name>`, `change done <name>`"
                            :task donut.dough.change/-main}
          checkout         {:doc  "Put every repo in a change set on its branch (`checkout <name> [--stash]`), or every repo on its default branch (`checkout main`)"
                            :task donut.dough.checkout/-main}
+         cli              {:doc  "Run the donut CLI from its checkout, with generate, generators, the template and --lib libraries read from their checkouts"
+                           :task donut.dough.cli/-main}
          cli-bump         {:doc  "Bump the donut CLI's patch version"
                            :task donut.dough.cli-bump/-main}
          cli-publish      {:doc  "Update the CLI's deps, bump its version, commit, tag, and push, which kicks off a CLI release"
                            :task donut.dough.cli-publish/-main}
          cli-update-deps  {:doc  "Point the donut CLI at the newest generate/generators on Clojars and the template's main SHA"
                            :task donut.dough.cli-update-deps/-main}
-         rebuild-test-app {:doc  "Install local donut libs, refresh the donut CLI, and rebuild template-test so changes across repos can be tested together"
-                           :task donut.dough.rebuild-test-app/-main}
+         link             {:doc  "Write a :donut/local alias to ~/.clojure/deps.edn that points every donut library at its checkout"
+                           :task donut.dough.link/-main}
          status           {:doc  "Report every sibling donut repo that isn't clean and on its default branch"
                            :task donut.dough.status/-main}
          sync             {:doc  "Clone/rebase every donut-party org repo off GitHub and print a report (needs `gh auth login`)"

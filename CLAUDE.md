@@ -18,7 +18,9 @@ Tasks are babashka tasks defined in `bb.edn`. `bin/dough` runs them from any dir
 - `dough change list` / `dough change push <name>` / `dough change done <name>` - show open change sets, push their branches, or delete one once every branch is merged into origin's default branch
 - `dough checkout <name> [--stash]` - put every repo in a change set on its branch; refuses (changing nothing) if a repo is dirty, unless `--stash`. `dough checkout main` returns every repo to its default branch
 - `dough sync` - clone (via SSH) and rebase every repo in the donut-party GitHub org, and print a report; needs `gh auth login`
-- `dough rebuild-test-app` - install local donut libs, refresh the donut CLI, and rebuild `../template-test` so changes across repos can be tested together
+- `dough link` - write a `:donut/local` alias into `~/.clojure/deps.edn` that overrides every donut library (found through each `deps.edn`'s `:donut/lib`) with its checkout; any app then runs against the checkouts with `clojure -M:dev:donut/local`
+- `dough cli <args>` - run the donut CLI from `../donut-cli`, with generate, generators and the app template read from their checkouts; `--lib` libraries resolve from checkouts through `DONUT_LOCAL_LIBS`
+- `dough app <name> [--skip-devtools]` - generate `../<name>` through `dough cli` and check it against the checkouts: backend tests, cljs compile and release, tailwind. Only deletes a directory it made (marked by `.dough-app`)
 - `dough cli-update-deps` - point the donut CLI at the newest generate/generators on Clojars and the template's main SHA
 - `dough cli-bump` - bump the donut CLI's patch version
 - `dough cli-publish` - update the CLI's deps, bump its version, commit, tag, and push, which kicks off a CLI release
@@ -36,7 +38,8 @@ A change spanning several repos is a change set: a committed file, `changes/<nam
   - `deps.clj`: pure deps.edn/bb.edn editing helpers (rewrite-clj based); the coordinate search is confined to the dependency's own map
   - `clojars.clj`: reads published versions from the Clojars API
   - `versions.clj`: version-string parse/bump/persist helpers
-  - `brew.clj`: locally-installed homebrew formula helpers, including `copy-local!`
+  - `registry.clj`: which donut libraries are checked out, from each `deps.edn`'s `:donut/lib`; used by `link`, `cli`, and `app`
+  - `change_set.clj`: the change-set file format and the all-or-nothing checkout plan
   - `git.clj`: impure git CLI wrappers (fetch, rebase, stash, clone, etc.) used by `sync` and `status`
   - `github.clj`: wraps `gh api` to list the donut-party org's repos; the source of truth for which repos `sync` touches
   - `sync.clj`: implements `sync`; rebases are all-or-nothing per repo (see its docstring)

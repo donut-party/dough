@@ -1,24 +1,28 @@
 (ns test-runner
   (:require
    [clojure.test :as t]
+   [donut.dough.app-test]
    [donut.dough.brew-formula-test]
-   [donut.dough.brew-test]
    [donut.dough.change-set-test]
+   [donut.dough.cli-test]
    [donut.dough.cli-update-deps-test]
    [donut.dough.deps-test]
-   [donut.dough.rebuild-test-app-test]
+   [donut.dough.link-test]
+   [donut.dough.registry-test]
    [donut.dough.status-test]
    [donut.dough.structure-test]
    [donut.dough.sync-test]
    [donut.dough.versions-test]))
 
 (def test-namespaces
-  '[donut.dough.brew-formula-test
-    donut.dough.brew-test
+  '[donut.dough.app-test
+    donut.dough.brew-formula-test
     donut.dough.change-set-test
+    donut.dough.cli-test
     donut.dough.cli-update-deps-test
     donut.dough.deps-test
-    donut.dough.rebuild-test-app-test
+    donut.dough.link-test
+    donut.dough.registry-test
     donut.dough.status-test
     donut.dough.structure-test
     donut.dough.sync-test
