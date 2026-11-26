@@ -1,6 +1,10 @@
 {:paths ["src" "resources" "test"]
  :tasks {brew-formula     {:doc  "Render ../homebrew-brew/Formula/donut.rb for the donut CLI's current version"
                            :task donut.dough.brew-formula/-main}
+         change           {:doc  "Change sets: `change new <name> <repo>...`, `change list`, `change push <name>`, `change done <name>`"
+                           :task donut.dough.change/-main}
+         checkout         {:doc  "Put every repo in a change set on its branch (`checkout <name> [--stash]`), or every repo on its default branch (`checkout main`)"
+                           :task donut.dough.checkout/-main}
          cli-bump         {:doc  "Bump the donut CLI's patch version"
                            :task donut.dough.cli-bump/-main}
          cli-publish      {:doc  "Update the CLI's deps, bump its version, commit, tag, and push, which kicks off a CLI release"

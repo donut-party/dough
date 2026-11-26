@@ -85,11 +85,12 @@
 (defn stash-push!
   "Stashes tracked and untracked changes. Returns true if there was
   anything to stash."
-  [dir]
-  (let [result (sh dir "stash" "push" "--include-untracked"
-                    "-m" "dough sync autostash")]
-    (and (success? result)
-         (not (str/includes? (:out result) "No local changes to save")))))
+  ([dir]
+   (stash-push! dir "dough sync autostash"))
+  ([dir message]
+   (let [result (sh dir "stash" "push" "--include-untracked" "-m" message)]
+     (and (success? result)
+          (not (str/includes? (:out result) "No local changes to save"))))))
 
 (defn stash-pop!
   "Pops the most recent stash. Returns true on a clean apply. On conflict,
@@ -116,3 +117,31 @@
   "The committer date of HEAD, as YYYY-MM-DD."
   [dir]
   (str/trim (:out (sh dir "log" "-1" "--format=%cd" "--date=short"))))
+
+(defn branch-exists?
+  [dir branch]
+  (success? (sh dir "rev-parse" "--verify" "--quiet" (str "refs/heads/" branch))))
+
+(defn create-branch!
+  "Creates `branch` at `start-point` without checking it out."
+  [dir branch start-point]
+  (sh dir "branch" branch start-point))
+
+(defn merged?
+  "Whether every commit on `branch` is already on `target`."
+  [dir branch target]
+  (success? (sh dir "merge-base" "--is-ancestor" branch target)))
+
+(defn ahead-behind
+  "[ahead behind]: commits on `branch` not on `base`, and on `base` not on
+  `branch`. nil if either ref doesn't exist."
+  [dir base branch]
+  (let [result (sh dir "rev-list" "--left-right" "--count" (str base "..." branch))]
+    (when (success? result)
+      (let [[behind ahead] (map parse-long (str/split (str/trim (:out result)) #"\s+"))]
+        [ahead behind]))))
+
+(defn push-branch!
+  "Pushes `branch` to origin and sets it as the upstream."
+  [dir branch]
+  (sh dir "push" "--set-upstream" "origin" branch))

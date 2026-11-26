@@ -21,14 +21,18 @@
     (is (true? (repo-status/needs-attention? {:branch "feature" :default-branch "main" :dirty? false})))))
 
 (deftest ->row-test
-  (let [row (repo-status/->row {:repo "graphputer" :branch "feature" :dirty? false
+  (let [row (repo-status/->row {:repo "graphputer" :branch "feature" :change-sets #{} :dirty? false
                                  :mtime "2027-05-31" :commit-date "2027-05-21"})]
-    (is (= ["graphputer" "feature" "no" "2027-05-31" "2027-05-21"] row)))
+    (is (= ["graphputer" "feature" "" "no" "2027-05-31" "2027-05-21"] row)))
+  (testing "names the change sets the branch belongs to"
+    (let [row (repo-status/->row {:repo "frontend" :branch "compiler" :change-sets (sorted-set "compiler" "demo")
+                                   :dirty? false :mtime "2027-05-31" :commit-date "2027-05-21"})]
+      (is (= "compiler demo" (nth row 2)))))
   (testing "dirty is highlighted, not a plain \"yes\""
     (let [row (repo-status/->row {:repo "graphputer" :branch "main" :dirty? true
                                    :mtime "2027-05-31" :commit-date "2027-05-21"})]
-      (is (not= "yes" (nth row 2)))
-      (is (str/includes? (nth row 2) "yes")))))
+      (is (not= "yes" (nth row 3)))
+      (is (str/includes? (nth row 3) "yes")))))
 
 (deftest ->csv-test
   (is (= "a,b\nc,d" (repo-status/->csv [["a" "b"] ["c" "d"]]))))

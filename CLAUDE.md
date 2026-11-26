@@ -13,7 +13,10 @@ Planning docs and notes live in the private `../project` repo (`plans/`, `todo.o
 Tasks are babashka tasks defined in `bb.edn`. `bin/dough` runs them from any directory (it passes `bb --config` so paths resolve to this repo); install it with `ln -s "$PWD/bin/dough" ~/.local/bin/dough`.
 
 - `dough` - open an interactive task picker (gum, via bblgum)
-- `dough status` - report every sibling repo that isn't clean and on its default branch
+- `dough status` - report every sibling repo that isn't clean and on its default branch, naming the change set its branch belongs to
+- `dough change new <name> <repo>... [--description TEXT]` - create a change set: branch `<name>` in each repo, recorded in `changes/<name>.edn`
+- `dough change list` / `dough change push <name>` / `dough change done <name>` - show open change sets, push their branches, or delete one once every branch is merged into origin's default branch
+- `dough checkout <name> [--stash]` - put every repo in a change set on its branch; refuses (changing nothing) if a repo is dirty, unless `--stash`. `dough checkout main` returns every repo to its default branch
 - `dough sync` - clone (via SSH) and rebase every repo in the donut-party GitHub org, and print a report; needs `gh auth login`
 - `dough rebuild-test-app` - install local donut libs, refresh the donut CLI, and rebuild `../template-test` so changes across repos can be tested together
 - `dough cli-update-deps` - point the donut CLI at the newest generate/generators on Clojars and the template's main SHA
@@ -21,6 +24,10 @@ Tasks are babashka tasks defined in `bb.edn`. `bin/dough` runs them from any dir
 - `dough cli-publish` - update the CLI's deps, bump its version, commit, tag, and push, which kicks off a CLI release
 - `dough brew-formula` - render `../homebrew-brew/Formula/donut.rb` for the CLI's current version
 - `dough test` - run the unit tests in `test/`
+
+## Change sets
+
+A change spanning several repos is a change set: a committed file, `changes/<name>.edn`, naming the branch for each repo (`{:description "..." :repos {"frontend" "fix" ...}}`). Change sets coordinate development only; nothing published reads them. See `src/donut/dough/change_set.clj`.
 
 ## Structure
 

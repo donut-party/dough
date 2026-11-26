@@ -8,6 +8,7 @@
    [bblgum.core :as gum]
    [bling.core :as bling]
    [clojure.string :as str]
+   [donut.dough.change-set :as change-set]
    [donut.dough.git :as git]
    [donut.dough.structure :as structure])
   (:import
@@ -40,15 +41,21 @@
     commit-date))
 
 (defn repo-status
-  [repo-dir]
-  (let [dirty-paths (git/status-paths repo-dir)
-        commit-date (git/last-commit-date repo-dir)]
-    {:repo           (str (fs/file-name repo-dir))
-     :branch         (git/current-branch repo-dir)
-     :default-branch (git/default-branch repo-dir)
-     :dirty?         (boolean (seq dirty-paths))
-     :mtime          (most-recent-mtime repo-dir dirty-paths commit-date)
-     :commit-date    commit-date}))
+  "`change-sets-by-repo-branch` is change-set/change-sets-by-repo-branch,
+  used to name the change set a repo's current branch belongs to."
+  ([repo-dir] (repo-status repo-dir {}))
+  ([repo-dir change-sets-by-repo-branch]
+   (let [dirty-paths (git/status-paths repo-dir)
+         commit-date (git/last-commit-date repo-dir)
+         repo        (str (fs/file-name repo-dir))
+         branch      (git/current-branch repo-dir)]
+     {:repo           repo
+      :branch         branch
+      :change-sets    (get change-sets-by-repo-branch [repo branch] #{})
+      :default-branch (git/default-branch repo-dir)
+      :dirty?         (boolean (seq dirty-paths))
+      :mtime          (most-recent-mtime repo-dir dirty-paths commit-date)
+      :commit-date    commit-date})))
 
 (defn needs-attention?
   "A repo is worth reporting if it's not sitting clean on its default
@@ -56,12 +63,13 @@
   [{:keys [branch default-branch dirty?]}]
   (or dirty? (not= branch default-branch)))
 
-(def columns ["repo name" "branch" "dirty?" "modified" "committed"])
+(def columns ["repo name" "branch" "change set" "dirty?" "modified" "committed"])
 
 (defn ->row
-  [{:keys [repo branch dirty? mtime commit-date]}]
+  [{:keys [repo branch change-sets dirty? mtime commit-date]}]
   [repo
    branch
+   (str/join " " change-sets)
    (if dirty? (bling/bling [:warning "yes"]) "no")
    mtime
    commit-date])
@@ -85,10 +93,11 @@
   ;; every git subprocess and filesystem walk at once causes enough
   ;; CPU/process-table/disk-I/O contention to be *slower* than bounding
   ;; concurrency to roughly the CPU count, which pmap does automatically.
-  (let [statuses (->> (structure/sibling-repo-paths)
-                       (pmap repo-status)
-                       (filter needs-attention?)
-                       (sort-by :repo))]
+  (let [by-repo-branch (change-set/change-sets-by-repo-branch (change-set/list-change-sets))
+        statuses       (->> (structure/sibling-repo-paths)
+                            (pmap #(repo-status % by-repo-branch))
+                            (filter needs-attention?)
+                            (sort-by :repo))]
     (if (empty? statuses)
       (bling/print-bling [:muted "\nNothing to pick up -- every repo is clean and on its default branch.\n"])
       (print-report! statuses))))

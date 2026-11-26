@@ -3,6 +3,7 @@
    [clojure.test :as t]
    [donut.dough.brew-formula-test]
    [donut.dough.brew-test]
+   [donut.dough.change-set-test]
    [donut.dough.cli-update-deps-test]
    [donut.dough.deps-test]
    [donut.dough.rebuild-test-app-test]
@@ -14,6 +15,7 @@
 (def test-namespaces
   '[donut.dough.brew-formula-test
     donut.dough.brew-test
+    donut.dough.change-set-test
     donut.dough.cli-update-deps-test
     donut.dough.deps-test
     donut.dough.rebuild-test-app-test
