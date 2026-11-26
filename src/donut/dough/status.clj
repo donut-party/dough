@@ -4,7 +4,6 @@
   so spare-time work across repos is easy to pick back up."
   (:require
    [babashka.fs :as fs]
-   [babashka.process :as ps]
    [bblgum.core :as gum]
    [bling.core :as bling]
    [clojure.string :as str]
@@ -18,26 +17,27 @@
   [millis]
   (str (.toLocalDate (.atZone (Instant/ofEpochMilli millis) (ZoneId/systemDefault)))))
 
-(defn- dirty-mtime-epoch-seconds
-  "Epoch seconds of the most recently modified file among dirty-paths
-  (relative to dir), via a single batched stat call (BSD stat, as shipped
-  on macOS)."
+(defn- dirty-mtime-millis
+  "Epoch millis of the most recently modified file among dirty-paths
+  (relative to dir), read in-process rather than by a stat subprocess (so
+  it works on Linux and macOS alike). nil if every dirty path was deleted."
   [dir dirty-paths]
-  (let [{:keys [out]} (apply ps/sh "stat" "-f" "%m" (map #(str (fs/path dir %)) dirty-paths))]
-    (->> (str/split-lines (str/trim out))
-         (map #(Long/parseLong (str/trim %)))
-         (apply max))))
+  (some->> dirty-paths
+           (map #(fs/path dir %))
+           (filter fs/exists?)
+           (map #(fs/file-time->millis (fs/last-modified-time %)))
+           seq
+           (apply max)))
 
 (defn most-recent-mtime
   "YYYY-MM-DD of the most recently modified file that's actually relevant
   to \"what did I touch\": for a dirty repo, that's the most recently
-  modified dirty file (a single batched stat call over just those paths,
-  not a walk of the whole tree -- node_modules and friends never come into
-  it). A clean repo has nothing dirty to point at, so its modified date is
-  just its last commit's."
+  modified dirty file (just those paths, not a walk of the whole tree --
+  node_modules and friends never come into it). A clean repo has nothing
+  dirty to point at, so its modified date is just its last commit's."
   [dir dirty-paths commit-date]
-  (if (seq dirty-paths)
-    (format-date (* 1000 (dirty-mtime-epoch-seconds dir dirty-paths)))
+  (if-let [millis (dirty-mtime-millis dir dirty-paths)]
+    (format-date millis)
     commit-date))
 
 (defn repo-status
